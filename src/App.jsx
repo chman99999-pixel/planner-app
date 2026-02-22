@@ -330,11 +330,11 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         `</Table></Worksheet></Workbook>`,
       ].join('');
 
-      const blob = new Blob(['\uFEFF' + xml], { type: 'application/xml;charset=utf-8' });
+      const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${year}년_${month}월_주간활동계획서.xml`;
+      a.download = `${year}년_${month}월_주간활동계획서.xls`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
@@ -351,7 +351,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       <div className="sticky top-0 bg-white border-b-2 border-black p-3 print:hidden">
         <div className="flex justify-center gap-3">
           <button onClick={downloadExcelFile} className="px-4 py-2 bg-purple-600 text-white font-bold rounded flex items-center gap-2">
-            <Download className="w-4 h-4" /> 엑셀파일 만들기
+            <Download className="w-4 h-4" /> 엑셀 다운로드
           </button>
           <button onClick={handlePrint} className="px-4 py-2 bg-blue-600 text-white font-bold rounded flex items-center gap-2">
             <Printer className="w-4 h-4" /> 인쇄
