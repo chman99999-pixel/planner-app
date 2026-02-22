@@ -218,7 +218,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         ${mkStyle('sub','#FFFFFF','#666666',0,11)}
         ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
         ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
-        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
+        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)}
         ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left')}
         ${mkStyle('c_hd','#F3F4F6','#000000',1,11)} ${mkStyle('c_ho','#F3F4F6','#DC2626',1,11)}
         ${mkStyle('t_ce','#F9FAFB','#000000',0,10)} ${mkStyle('g_ce','#F3F4F6','#000000',0,10)}
@@ -261,8 +261,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       rows += buildRow([{ st:'spc', ma:5 }], 8);
       // 범례
       rows += buildRow([
-        {st:'l_ev',v:'전체행사'},{st:'l_fi',v:'고정프로그램'},{st:'l_ex',v:'내외부프로그램'},
-        {st:'l_lu',v:'점심시간'},
+        {st:'l_ev',v:'전체행사',ma:1},{st:'l_fi',v:'고정프로그램',ma:1},{st:'l_ex',v:'내외부프로그램',ma:1},
       ], 28);
       rows += buildRow([{ st:'spc', ma:5 }], 8);
 
@@ -370,10 +369,9 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         <table className="w-full border-collapse mb-4" style={{tableLayout: 'fixed'}}>
           <tbody>
             <tr>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ff6b6b', color: 'white'}}>전체행사</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#74b9ff', color: 'white'}}>고정프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#a29bfe', color: 'white'}}>내외부프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ffcccc', color: 'black'}}>점심시간</td>
+              <td colSpan={2} className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ff6b6b', color: 'white'}}>전체행사</td>
+              <td colSpan={2} className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#74b9ff', color: 'white'}}>고정프로그램</td>
+              <td colSpan={2} className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#a29bfe', color: 'white'}}>내외부프로그램</td>
             </tr>
           </tbody>
         </table>
