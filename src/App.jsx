@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, Sparkles, ChevronLeft, ChevronRight, Check, X, Printer, Plus, Loader2, PartyPopper, CalendarDays, Download } from 'lucide-react';
+import { Calendar, Users, Sparkles, ChevronLeft, ChevronRight, Check, X, Printer, Plus, PartyPopper, CalendarDays, Download } from 'lucide-react';
+import ProgramDBBrowser from './ProgramDBBrowser.jsx';
+import { PROGRAM_DB } from './data/programs.js';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -152,7 +154,7 @@ const TimeSelect = ({ value, onChange, label }) => (
   </select>
 );
 
-const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, externalPrograms = [], externalSchedules = {}, participatory = [], selectedParticipatory = [], participatorySchedules = {}, creative = [], selectedCreative = [], creativeSchedules = {}, dismissalTime, title, onClose, isFinal }) => {
+const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, externalPrograms = [], externalSchedules = {}, dismissalTime, title, onClose, isFinal }) => {
   const weekdays = getWeekdaysOfMonth(year, month);
   const weeks = [];
   let week = [], lastDay = -1;
@@ -171,14 +173,6 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
     externalPrograms.forEach(idx => {
       const s = externalSchedules[idx], prog = EXTERNAL_PROGRAMS[idx];
       s?.dates?.includes(dateStr) && prog && result.push({ type: 'external', name: `${prog.name}(${prog.type})`, startTime: s.startTime, endTime: s.endTime });
-    });
-    selectedParticipatory.forEach(idx => {
-      const s = participatorySchedules[idx], prog = participatory[idx];
-      s?.dates?.includes(dateStr) && prog && result.push({ type: 'participatory', name: prog.title, startTime: s.startTime, endTime: s.endTime });
-    });
-    selectedCreative.forEach(idx => {
-      const s = creativeSchedules[idx], prog = creative[idx];
-      s?.dates?.includes(dateStr) && prog && result.push({ type: 'creative', name: prog.title, startTime: s.startTime, endTime: s.endTime });
     });
     return result;
   };
@@ -224,14 +218,12 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         ${mkStyle('sub','#FFFFFF','#666666',0,11)}
         ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
         ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
-        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_pa','#55EFC4','#000000',1,11)}
-        ${mkStyle('l_cr','#FDCB6E','#000000',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
+        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
         ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left')}
         ${mkStyle('c_hd','#F3F4F6','#000000',1,11)} ${mkStyle('c_ho','#F3F4F6','#DC2626',1,11)}
         ${mkStyle('t_ce','#F9FAFB','#000000',0,10)} ${mkStyle('g_ce','#F3F4F6','#000000',0,10)}
         ${mkStyle('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkStyle('fi_c','#74B9FF','#FFFFFF',1,10)}
-        ${mkStyle('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkStyle('pa_c','#55EFC4','#000000',1,10)}
-        ${mkStyle('cr_c','#FDCB6E','#000000',1,10)} ${mkStyle('lu_c','#FFCCCC','#000000',0,10)}
+        ${mkStyle('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkStyle('lu_c','#FFCCCC','#000000',0,10)}
         ${mkStyle('ho_c','#FEE2E2','#DC2626',1,12)} ${mkStyle('em_c','#FFFFFF','#000000',0,10)}
       </Styles>`;
 
@@ -270,7 +262,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       // 범례
       rows += buildRow([
         {st:'l_ev',v:'전체행사'},{st:'l_fi',v:'고정프로그램'},{st:'l_ex',v:'내외부프로그램'},
-        {st:'l_pa',v:'참여형프로그램'},{st:'l_cr',v:'창의형프로그램'},{st:'l_lu',v:'점심시간'},
+        {st:'l_lu',v:'점심시간'},
       ], 28);
       rows += buildRow([{ st:'spc', ma:5 }], 8);
 
@@ -301,8 +293,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
             const scheds = getAtTime(info.dateStr, slot);
             if (scheds.length) {
               const s = scheds[0];
-              const st = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' :
-                         s.type==='participatory' ? 'pa_c' : s.type==='creative' ? 'cr_c' : 'fi_c';
+              const st = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' : 'fi_c';
               specs.push({ st, v: s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name });
             } else {
               specs.push({ st:'em_c', v:'' });
@@ -382,8 +373,6 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
               <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ff6b6b', color: 'white'}}>전체행사</td>
               <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#74b9ff', color: 'white'}}>고정프로그램</td>
               <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#a29bfe', color: 'white'}}>내외부프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#55efc4', color: 'black'}}>참여형프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#fdcb6e', color: 'black'}}>창의형프로그램</td>
               <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ffcccc', color: 'black'}}>점심시간</td>
             </tr>
           </tbody>
@@ -433,8 +422,8 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
                         const scheds = getAtTime(info.dateStr, slot);
                         if (!scheds.length) return <td key={i} className="border border-black"></td>;
                         const s = scheds[0];
-                        const bg = s.type === 'event' ? '#ff6b6b' : s.type === 'external' ? '#a29bfe' : s.type === 'participatory' ? '#55efc4' : s.type === 'creative' ? '#fdcb6e' : '#74b9ff';
-                        const textColor = (s.type === 'participatory' || s.type === 'creative') ? '#000' : '#fff';
+                        const bg = s.type === 'event' ? '#ff6b6b' : s.type === 'external' ? '#a29bfe' : '#74b9ff';
+                        const textColor = '#fff';
                         const displayName = s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name;
                         return <td key={i} className="border border-black p-1 text-center text-sm font-medium" style={{backgroundColor:bg, color: textColor}}>{displayName}</td>;
                       })}
@@ -506,46 +495,6 @@ export default function WeeklyPlannerApp() {
   const [extSchedules, setExtSchedules] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [showFinalPlan, setShowFinalPlan] = useState(false);
-  const [participatory, setParticipatory] = useState([]);
-  const [creative, setCreative] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const [selectedParticipatory, setSelectedParticipatory] = useState([]);
-  const [selectedCreative, setSelectedCreative] = useState([]);
-  const [participatorySchedules, setParticipatorySchedules] = useState({});
-  const [creativeSchedules, setCreativeSchedules] = useState({});
-
-  const toggleParticipatory = (idx) => {
-    if (selectedParticipatory.includes(idx)) {
-      setSelectedParticipatory(prev => prev.filter(i => i !== idx));
-      setParticipatorySchedules(prev => { const n = {...prev}; delete n[idx]; return n; });
-    } else {
-      setSelectedParticipatory(prev => [...prev, idx]);
-    }
-  };
-
-  const toggleCreative = (idx) => {
-    if (selectedCreative.includes(idx)) {
-      setSelectedCreative(prev => prev.filter(i => i !== idx));
-      setCreativeSchedules(prev => { const n = {...prev}; delete n[idx]; return n; });
-    } else {
-      setSelectedCreative(prev => [...prev, idx]);
-    }
-  };
-
-  const toggleParticipatoryDate = (idx, date) => {
-    setParticipatorySchedules(prev => {
-      const cur = prev[idx]?.dates || [];
-      return { ...prev, [idx]: { ...prev[idx], dates: cur.includes(date) ? cur.filter(d => d !== date) : [...cur, date].sort() } };
-    });
-  };
-
-  const toggleCreativeDate = (idx, date) => {
-    setCreativeSchedules(prev => {
-      const cur = prev[idx]?.dates || [];
-      return { ...prev, [idx]: { ...prev[idx], dates: cur.includes(date) ? cur.filter(d => d !== date) : [...cur, date].sort() } };
-    });
-  };
 
   useEffect(() => {
     const y = 2026, fw = getFirstWeekday(y, userInfo.month), ff = getFirstFriday(y, userInfo.month), tf = getThirdFriday(y, userInfo.month), et = userInfo.dismissalTime === '16:00' ? '16:00' : '17:00';
@@ -556,66 +505,6 @@ export default function WeeklyPlannerApp() {
       birthday: { ...p.birthday, dates: tf ? [tf] : [], endTime: et, rule: `셋째주 금요일 13:00~${et}` }
     }));
   }, [userInfo.month, userInfo.dismissalTime]);
-
-  useEffect(() => {
-    if (step === 3 && !participatory.length) {
-      setLoading(true);
-      const { cognitive, cognitiveLevel, wheelchair } = userInfo;
-
-      setTimeout(() => {
-        let participatoryList = [];
-        let creativeList = [];
-
-        if (cognitive === '상' || cognitiveLevel === '중학생') {
-          participatoryList = [
-            { title: '모닝 피트니스', category: '운동', icon: '🏃', desc: '체계적인 아침 운동 프로그램' },
-            { title: '생활 속 경제교실', category: '일반교육', icon: '💰', desc: '용돈 관리와 경제 개념 학습' },
-            { title: '문화예술 탐방', category: '문화활동', icon: '🎭', desc: '미술관, 공연장 방문 체험' },
-            { title: '직업체험 프로젝트', category: '새로운경험', icon: '💼', desc: '다양한 직업 현장 체험' },
-            { title: '토론과 발표', category: '사회성', icon: '🎤', desc: '주제별 토론 및 발표 연습' }
-          ];
-          creativeList = [
-            { title: '밴드 합주', category: '음악활동', icon: '🎸', desc: '악기 연주 및 합주 활동' },
-            { title: '미디어 아트', category: '미술/공예', icon: '🖼️', desc: '디지털 도구 활용 창작' },
-            { title: '도시농부 프로젝트', category: '식물가꾸기', icon: '🌿', desc: '텃밭 가꾸기와 수확' },
-            { title: '영상 크리에이터', category: '미디어', icon: '🎬', desc: '영상 촬영 및 편집' }
-          ];
-        } else if (cognitive === '중' || cognitiveLevel === '초등 고학년') {
-          participatoryList = [
-            { title: '굿모닝 스트레칭', category: '운동', icon: '🤸', desc: '간단한 스트레칭과 체조' },
-            { title: '슬기로운 생활백서', category: '일반교육', icon: '📚', desc: '일상생활 기술 배우기' },
-            { title: '마을 탐험대', category: '문화활동', icon: '🗺️', desc: '지역사회 시설 방문' },
-            { title: '요리조리 쿠킹', category: '새로운경험', icon: '👨‍🍳', desc: '간단한 요리 만들기' },
-            { title: '친구와 함께', category: '사회성', icon: '🤝', desc: '협동 게임 및 활동' }
-          ];
-          creativeList = [
-            { title: '신나는 음악교실', category: '음악활동', icon: '🎵', desc: '노래 부르기와 리듬악기' },
-            { title: '알록달록 미술놀이', category: '미술/공예', icon: '🎨', desc: '다양한 재료로 작품 만들기' },
-            { title: '초록초록 식물교실', category: '식물가꾸기', icon: '🌱', desc: '화분 가꾸기와 관찰' },
-            { title: '사진 찍기', category: '미디어', icon: '📸', desc: '사진 촬영과 앨범 만들기' }
-          ];
-        } else {
-          participatoryList = [
-            { title: '몸 튼튼 체조', category: '운동', icon: '🎈', desc: wheelchair ? '앉아서 하는 가벼운 체조' : '음악에 맞춰 즐거운 체조' },
-            { title: '오감 놀이', category: '감각활동', icon: '✋', desc: '다양한 감각 자극 활동' },
-            { title: '동화 나라', category: '문화활동', icon: '📖', desc: '동화 듣기와 역할놀이' },
-            { title: '자연 놀이터', category: '새로운경험', icon: '🍃', desc: '자연물 탐색 및 놀이' },
-            { title: '인사해요', category: '사회성', icon: '👋', desc: '인사하기와 감정 표현' }
-          ];
-          creativeList = [
-            { title: '둥둥 북치기', category: '음악활동', icon: '🥁', desc: '타악기 연주와 리듬놀이' },
-            { title: '손도장 미술', category: '미술/공예', icon: '🖐️', desc: '손과 발을 이용한 미술' },
-            { title: '꽃잎 관찰', category: '식물가꾸기', icon: '🌸', desc: '꽃과 나뭇잎 관찰하기' },
-            { title: '스티커 놀이', category: '미술/공예', icon: '⭐', desc: '스티커 붙이기 활동' }
-          ];
-        }
-
-        setParticipatory(participatoryList);
-        setCreative(creativeList);
-        setLoading(false);
-      }, 1000);
-    }
-  }, [step, participatory.length, userInfo]);
 
   const toggleFixedDate = (key, date) => setFixedPrograms(p => {
     const cur = p[key].dates || [];
@@ -780,14 +669,6 @@ export default function WeeklyPlannerApp() {
 
         {step === 3 && (
           <div className="space-y-5">
-            {loading ? (
-              <div className="bg-white rounded-2xl shadow-lg p-12 flex flex-col items-center">
-                <Loader2 className="w-12 h-12 animate-spin text-indigo-500 mb-4" />
-                <p className="text-lg text-gray-600">이용자 특성에 맞는 프로그램을 추천하고 있습니다...</p>
-                <p className="text-base text-gray-400 mt-2">인지능력: {userInfo.cognitive} | 인지수준: {userInfo.cognitiveLevel}</p>
-              </div>
-            ) : (
-              <>
                 {events.filter(e => e.name).length > 0 && (
                   <div className="bg-pink-50 rounded-2xl shadow-lg p-6 border-2 border-pink-200">
                     <h2 className="text-2xl font-bold text-pink-800 flex items-center gap-2 mb-4">
@@ -860,71 +741,11 @@ export default function WeeklyPlannerApp() {
                   <CalendarDays className="w-6 h-6" /> {userInfo.month}월 계획서 미리보기
                 </button>
 
-                <div className="bg-emerald-50 rounded-2xl shadow-lg p-6 border-2 border-emerald-200">
-                  <h2 className="text-2xl font-bold text-emerald-800 mb-2">🤝 참여형 프로그램 추천</h2>
-                  <p className="text-base text-emerald-600 mb-4">이용자 특성(인지능력: {userInfo.cognitive}, 인지수준: {userInfo.cognitiveLevel})에 맞는 프로그램입니다.</p>
-                  <div className="space-y-3">
-                    {participatory.map((p, i) => {
-                      const isSelected = selectedParticipatory.includes(i);
-                      return (
-                        <div key={i} className={`bg-white rounded-lg p-4 border-2 transition-all ${isSelected ? 'border-emerald-500' : 'border-transparent'}`}>
-                          <div className="flex items-center gap-3">
-                            <button onClick={() => toggleParticipatory(i)} className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-emerald-500 border-emerald-500' : 'border-gray-300'}`}>
-                              {isSelected && <Check className="w-5 h-5 text-white" />}
-                            </button>
-                            <span className="text-3xl">{p.icon}</span>
-                            <div className="flex-1">
-                              <p className="font-bold text-lg">{p.title}</p>
-                              <p className="text-base text-gray-500">{p.category} | {p.desc}</p>
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <ProgramScheduleItem
-                              schedule={participatorySchedules[i] || {}}
-                              month={userInfo.month}
-                              onDateToggle={(d) => toggleParticipatoryDate(i, d)}
-                              onTimeChange={(f, v) => setParticipatorySchedules(prev => ({...prev, [i]: {...prev[i], [f]: v}}))}
-                              color="emerald"
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                <div className="bg-amber-50 rounded-2xl shadow-lg p-6 border-2 border-amber-200">
-                  <h2 className="text-2xl font-bold text-amber-800 mb-2">🎨 창의형 프로그램 추천</h2>
-                  <p className="text-base text-amber-600 mb-4">이용자 특성에 맞는 창의 활동입니다.</p>
-                  <div className="space-y-3">
-                    {creative.map((p, i) => {
-                      const isSelected = selectedCreative.includes(i);
-                      return (
-                        <div key={i} className={`bg-white rounded-lg p-4 border-2 transition-all ${isSelected ? 'border-amber-500' : 'border-transparent'}`}>
-                          <div className="flex items-center gap-3">
-                            <button onClick={() => toggleCreative(i)} className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center flex-shrink-0 ${isSelected ? 'bg-amber-500 border-amber-500' : 'border-gray-300'}`}>
-                              {isSelected && <Check className="w-5 h-5 text-white" />}
-                            </button>
-                            <span className="text-3xl">{p.icon}</span>
-                            <div className="flex-1">
-                              <p className="font-bold text-lg">{p.title}</p>
-                              <p className="text-base text-gray-500">{p.category} | {p.desc}</p>
-                            </div>
-                          </div>
-                          {isSelected && (
-                            <ProgramScheduleItem
-                              schedule={creativeSchedules[i] || {}}
-                              month={userInfo.month}
-                              onDateToggle={(d) => toggleCreativeDate(i, d)}
-                              onTimeChange={(f, v) => setCreativeSchedules(prev => ({...prev, [i]: {...prev[i], [f]: v}}))}
-                              color="amber"
-                            />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
+                <ProgramDBBrowser
+                  currentMonth={userInfo.month}
+                  wheelchair={userInfo.wheelchair}
+                  cognitiveInfo={{ cognitive: userInfo.cognitive, cognitiveLevel: userInfo.cognitiveLevel }}
+                />
 
                 <div className="flex gap-4">
                   <button onClick={() => setStep(2)} className="flex-1 py-4 bg-gray-200 rounded-xl font-bold text-lg">← 이전 단계로</button>
@@ -932,14 +753,12 @@ export default function WeeklyPlannerApp() {
                     <Printer className="w-6 h-6" /> {userInfo.month}월 주간활동 계획서 만들기
                   </button>
                 </div>
-              </>
-            )}
           </div>
         )}
       </main>
 
-      {showPreview && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} participatory={participatory} selectedParticipatory={selectedParticipatory} participatorySchedules={participatorySchedules} creative={creative} selectedCreative={selectedCreative} creativeSchedules={creativeSchedules} dismissalTime={userInfo.dismissalTime} title="계획서 미리보기" onClose={() => setShowPreview(false)} />}
-      {showFinalPlan && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} participatory={participatory} selectedParticipatory={selectedParticipatory} participatorySchedules={participatorySchedules} creative={creative} selectedCreative={selectedCreative} creativeSchedules={creativeSchedules} dismissalTime={userInfo.dismissalTime} title="주간활동 계획서" onClose={() => setShowFinalPlan(false)} isFinal={true} />}
+      {showPreview && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} dismissalTime={userInfo.dismissalTime} title="계획서 미리보기" onClose={() => setShowPreview(false)} />}
+      {showFinalPlan && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} dismissalTime={userInfo.dismissalTime} title="주간활동 계획서" onClose={() => setShowFinalPlan(false)} isFinal={true} />}
     </div>
   );
 }
@@ -1015,29 +834,3 @@ function ExtItem({ idx, prog, schedule, month, onDateToggle, onTimeChange }) {
   );
 }
 
-function ProgramScheduleItem({ schedule, month, onDateToggle, onTimeChange, color }) {
-  const [showCal, setShowCal] = useState(false);
-  const bgColor = color === 'emerald' ? 'bg-emerald-100' : 'bg-amber-100';
-  const textColor = color === 'emerald' ? 'text-emerald-700' : 'text-amber-700';
-
-  return (
-    <div className="mt-4 pt-4 border-t border-gray-200 space-y-3">
-      <div className="relative">
-        <button onClick={() => setShowCal(!showCal)} className={`px-4 py-2 ${bgColor} ${textColor} rounded-lg text-base font-medium flex items-center gap-2`}>
-          <Calendar className="w-5 h-5" /> 날짜 선택 {schedule.dates?.length > 0 && `(${schedule.dates.length})`}
-        </button>
-        {showCal && <MiniCalendar year={2026} month={month} selectedDates={schedule.dates || []} onDateToggle={onDateToggle} onClose={() => setShowCal(false)} />}
-      </div>
-      {schedule.dates?.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {schedule.dates.map(d => <span key={d} className={`px-3 py-1 ${bgColor} rounded-lg text-base ${textColor}`}>{formatDate(new Date(d))}</span>)}
-        </div>
-      )}
-      <div className="flex items-center gap-2">
-        <TimeSelect value={schedule.startTime || ''} onChange={v => onTimeChange('startTime', v)} label="시작" />
-        <span className="text-gray-400 text-lg">~</span>
-        <TimeSelect value={schedule.endTime || ''} onChange={v => onTimeChange('endTime', v)} label="종료" />
-      </div>
-    </div>
-  );
-}
