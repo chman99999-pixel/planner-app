@@ -449,20 +449,25 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       <style>{`
         @media print {
           .print\\:hidden { display: none !important; }
-          /* 모든 요소 숨김 */
+          /* 모든 요소 숨김 (레이아웃 공간도 제거) */
           body {
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
             visibility: hidden;
             overflow: visible !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
-          html { overflow: visible !important; }
-          /* fixed 모달을 일반 흐름으로 */
+          html { overflow: visible !important; margin: 0 !important; padding: 0 !important; }
+          * { overflow: visible !important; }
+          /* fixed 모달을 문서 상단에 절대 배치 (blank 페이지 방지) */
           .fixed {
-            position: static !important;
+            position: absolute !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100% !important;
             overflow: visible !important;
           }
-          * { overflow: visible !important; }
           /* 계획서 표 영역만 표시 */
           #schedule-table-area,
           #schedule-table-area * {
