@@ -64,9 +64,9 @@ const CAT_BADGE = {
 };
 
 const COG_LABEL = { 1: '인지 낮음', 2: '인지 중간', 3: '인지 높음' };
-const COG_COLOR = { 1: 'bg-red-100 text-red-600', 2: 'bg-yellow-100 text-yellow-700', 3: 'bg-green-100 text-green-700' };
-const WC_LABEL  = { O: '휠체어 ✅', '△': '휠체어 △', X: '휠체어 ✗' };
-const WC_COLOR  = { O: 'bg-blue-100 text-blue-700', '△': 'bg-gray-100 text-gray-500', X: 'bg-red-50 text-red-400' };
+const COG_COLOR = { 1: 'bg-red-100 text-red-700', 2: 'bg-yellow-100 text-yellow-700', 3: 'bg-green-100 text-green-700' };
+const WC_LABEL  = { O: '휠체어 가능', '△': '휠체어 일부', X: '휠체어 어려움' };
+const WC_COLOR  = { O: 'bg-blue-100 text-blue-700', '△': 'bg-gray-200 text-gray-600', X: 'bg-red-100 text-red-500' };
 const IN_COLOR  = { '실내': 'bg-indigo-100 text-indigo-700', '실외': 'bg-emerald-100 text-emerald-700', '실내/외': 'bg-cyan-100 text-cyan-700' };
 
 // 현재 월에 추천되는 프로그램인지 확인
@@ -74,17 +74,16 @@ const isRecommendedForMonth = (prog, month) => {
   if (!prog.months) return false;
   const m = prog.months;
   if (m === '1-12') return true;
-  // "1-6" 형태
   const rangeMatch = m.match(/^(\d+)-(\d+)$/);
   if (rangeMatch) {
     const [, from, to] = rangeMatch.map(Number);
     return month >= from && month <= to;
   }
-  // "1,3,5,7" 형태
   const nums = m.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
   return nums.includes(month);
 };
 
+/* ───────── 프로그램 카드 (큰 글씨, 깔끔한 디자인) ───────── */
 function ProgramCard({ prog, currentMonth }) {
   const [expanded, setExpanded] = useState(false);
   const cardBg = CAT_BG[prog.category] || CAT_BG[getParentCategory(prog.category)] || 'bg-gray-50 border-gray-200';
@@ -92,81 +91,81 @@ function ProgramCard({ prog, currentMonth }) {
   const recommended = isRecommendedForMonth(prog, currentMonth);
 
   return (
-    <div className={`border-2 rounded-xl overflow-hidden transition-all ${cardBg} hover:shadow-md`}>
-      {/* 카드 헤더 */}
-      <div className="p-3">
-        <div className="mb-2">
-          <div className="flex items-center gap-1 flex-wrap mb-1">
-            <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${badgeColor}`}>
-              {prog.category}
+    <div className={`border-2 rounded-2xl overflow-hidden transition-all ${cardBg} hover:shadow-md`}>
+      <div className="p-4">
+        {/* 뱃지 */}
+        <div className="flex items-center gap-1.5 flex-wrap mb-2">
+          <span className={`text-sm px-2.5 py-0.5 rounded-full font-medium ${badgeColor}`}>
+            {prog.category}
+          </span>
+          {recommended && (
+            <span className="text-sm px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">
+              {currentMonth}월 추천
             </span>
-            {recommended && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-700 font-medium">
-                📅 이달 추천
-              </span>
-            )}
-            {prog.holiday && (
-              <span className="text-xs px-2 py-0.5 rounded-full bg-rose-100 text-rose-700">
-                🎉 {prog.holiday}
-              </span>
-            )}
-          </div>
-          <h3 className="font-bold text-gray-900 text-base leading-tight">{prog.title}</h3>
-          <p className="text-gray-500 text-xs mt-0.5 leading-snug">{prog.desc}</p>
+          )}
+          {prog.holiday && (
+            <span className="text-sm px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-700">
+              {prog.holiday}
+            </span>
+          )}
         </div>
 
-        {/* 태그 행 */}
-        <div className="flex flex-wrap gap-1 mt-2">
+        {/* 제목 + 설명 */}
+        <h3 className="font-bold text-gray-900 text-lg leading-snug">{prog.title}</h3>
+        <p className="text-gray-500 text-sm mt-1 leading-relaxed">{prog.desc}</p>
+
+        {/* 태그 */}
+        <div className="flex flex-wrap gap-1.5 mt-3">
           {prog.cognitiveLevel.map(lv => (
-            <span key={lv} className={`text-xs px-1.5 py-0.5 rounded font-medium ${COG_COLOR[lv]}`}>
+            <span key={lv} className={`text-sm px-2 py-0.5 rounded-lg font-medium ${COG_COLOR[lv]}`}>
               {COG_LABEL[lv]}
             </span>
           ))}
-          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${WC_COLOR[prog.wheelchair]}`}>
+          <span className={`text-sm px-2 py-0.5 rounded-lg font-medium ${WC_COLOR[prog.wheelchair]}`}>
             {WC_LABEL[prog.wheelchair]}
           </span>
-          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${IN_COLOR[prog.indoor] || 'bg-gray-100 text-gray-600'}`}>
+          <span className={`text-sm px-2 py-0.5 rounded-lg font-medium ${IN_COLOR[prog.indoor] || 'bg-gray-100 text-gray-600'}`}>
             {prog.indoor}
           </span>
-          <span className="text-xs px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-            ⏱ {prog.duration}분
+          <span className="text-sm px-2 py-0.5 rounded-lg bg-gray-100 text-gray-600 font-medium">
+            {prog.duration}분
           </span>
         </div>
       </div>
 
-      {/* 펼치기 버튼 */}
+      {/* 펼치기 */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-3 py-1.5 bg-white bg-opacity-60 border-t border-current border-opacity-10 text-xs text-gray-500 flex items-center justify-center gap-1 hover:bg-opacity-80 transition-all"
+        className="w-full px-4 py-2 bg-white bg-opacity-60 border-t border-current border-opacity-10 text-sm text-gray-500 flex items-center justify-center gap-1 hover:bg-opacity-80 transition-all"
       >
-        {expanded ? <><ChevronUp className="w-3 h-3" /> 접기</> : <><ChevronDown className="w-3 h-3" /> 자세히 보기</>}
+        {expanded ? <><ChevronUp className="w-4 h-4" /> 접기</> : <><ChevronDown className="w-4 h-4" /> 자세히 보기</>}
       </button>
 
-      {/* 확장 상세 내용 */}
+      {/* 상세 */}
       {expanded && (
-        <div className="px-3 pb-3 pt-2 bg-white bg-opacity-60 space-y-2 border-t border-current border-opacity-10">
+        <div className="px-4 pb-4 pt-3 bg-white bg-opacity-60 space-y-3 border-t border-current border-opacity-10">
           {prog.materials && (
             <div>
-              <p className="text-xs font-bold text-gray-600 mb-0.5">🧰 준비물</p>
-              <p className="text-xs text-gray-700 leading-relaxed">{prog.materials}</p>
+              <p className="text-sm font-bold text-gray-700 mb-1">준비물</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{prog.materials}</p>
             </div>
           )}
           {prog.summary && (
             <div>
-              <p className="text-xs font-bold text-gray-600 mb-0.5">📋 활동 내용</p>
-              <p className="text-xs text-gray-700 leading-relaxed">{prog.summary}</p>
+              <p className="text-sm font-bold text-gray-700 mb-1">활동 내용</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{prog.summary}</p>
             </div>
           )}
           {prog.effects && (
             <div>
-              <p className="text-xs font-bold text-gray-600 mb-0.5">✨ 기대 효과</p>
-              <p className="text-xs text-gray-700 leading-relaxed">{prog.effects}</p>
+              <p className="text-sm font-bold text-gray-700 mb-1">기대 효과</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{prog.effects}</p>
             </div>
           )}
           {prog.note && (
             <div>
-              <p className="text-xs font-bold text-gray-600 mb-0.5">💬 비고</p>
-              <p className="text-xs text-gray-700 leading-relaxed">{prog.note}</p>
+              <p className="text-sm font-bold text-gray-700 mb-1">비고</p>
+              <p className="text-sm text-gray-600 leading-relaxed">{prog.note}</p>
             </div>
           )}
         </div>
@@ -175,8 +174,43 @@ function ProgramCard({ prog, currentMonth }) {
   );
 }
 
+/* ───────── 카테고리 버튼 그리드 ───────── */
+function CategoryButtons({ categories, activeCategory, onSelect, counts }) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {categories.map(cat => {
+        const isActive = activeCategory === cat.id;
+        const count = cat.id === 'all' ? null : (counts[cat.id] || 0);
+        return (
+          <button
+            key={cat.id}
+            onClick={() => onSelect(cat.id)}
+            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+              isActive
+                ? `${cat.color} text-white shadow-md`
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-200'
+            }`}
+          >
+            {cat.label}
+            {count != null && (
+              <span className={`ml-1 ${isActive ? 'text-white opacity-80' : 'text-gray-400'}`}>
+                {count}
+              </span>
+            )}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+/* ───────── 메인 브라우저 ───────── */
 export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveInfo }) {
   const [showFullDB, setShowFullDB] = useState(false);
+  // 추천 섹션
+  const [recCategory, setRecCategory] = useState('all');
+  const [recShowCount, setRecShowCount] = useState(10);
+  // 전체 DB 섹션
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [filterCog, setFilterCog] = useState([]);
@@ -184,11 +218,12 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
   const [filterIndoor, setFilterIndoor] = useState('');
   const [filterMonth, setFilterMonth] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+  const [fullShowCount, setFullShowCount] = useState(10);
 
-  // 인지능력 매핑: 상→3, 중→2, 하→1
+  // 인지능력 매핑
   const cogLevel = cognitiveInfo?.cognitive === '상' ? 3 : cognitiveInfo?.cognitive === '중' ? 2 : 1;
 
-  // 추천 프로그램: 인지능력 + 휠체어 필터 → 이달 추천 우선 정렬
+  // 추천 프로그램
   const recommended = useMemo(() => {
     const list = PROGRAM_DB.filter(p => {
       if (!p.cognitiveLevel.includes(cogLevel)) return false;
@@ -205,6 +240,32 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
     return list;
   }, [cogLevel, wheelchair, currentMonth]);
 
+  // 추천 중 카테고리 필터
+  const recFiltered = useMemo(() => {
+    if (recCategory === 'all') return recommended;
+    return recommended.filter(p => p.category === recCategory || getParentCategory(p.category) === recCategory);
+  }, [recommended, recCategory]);
+
+  // 추천에 존재하는 카테고리 + 개수
+  const recCatCounts = useMemo(() => {
+    const counts = {};
+    recommended.forEach(p => {
+      const parent = getParentCategory(p.category);
+      counts[parent] = (counts[parent] || 0) + 1;
+      if (parent !== p.category) {
+        counts[p.category] = (counts[p.category] || 0) + 1;
+      }
+    });
+    return counts;
+  }, [recommended]);
+
+  // 추천에 있는 대분류 카테고리만 필터
+  const recCategories = useMemo(() => {
+    const available = CATEGORIES.filter(c => c.id === 'all' || recCatCounts[c.id]);
+    return available;
+  }, [recCatCounts]);
+
+  // 전체 DB 필터
   const filtered = useMemo(() => {
     return PROGRAM_DB.filter(p => {
       if (activeCategory !== 'all' && p.category !== activeCategory && getParentCategory(p.category) !== activeCategory) return false;
@@ -220,7 +281,6 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
   const toggleCog = (lv) => setFilterCog(prev => prev.includes(lv) ? prev.filter(x => x !== lv) : [...prev, lv]);
   const hasActiveFilter = filterCog.length > 0 || filterWC || filterIndoor || filterMonth || searchText;
 
-  // 카테고리별 개수 (서브카테고리 → 대분류 합산)
   const catCounts = useMemo(() => {
     const counts = { all: PROGRAM_DB.length };
     PROGRAM_DB.forEach(p => {
@@ -235,70 +295,110 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
 
   const cogLabel = cogLevel === 3 ? '높음' : cogLevel === 2 ? '중간' : '낮음';
 
+  // 카테고리 변경 시 보여주는 개수 초기화
+  const handleRecCategory = (id) => {
+    setRecCategory(id);
+    setRecShowCount(10);
+  };
+  const handleFullCategory = (id) => {
+    setActiveCategory(id);
+    setFullShowCount(10);
+  };
+
   return (
-    <div className="space-y-4">
-      {/* ===== 추천 프로그램 섹션 ===== */}
+    <div className="space-y-5">
+      {/* ===== 추천 프로그램 ===== */}
       <div className="bg-white rounded-2xl shadow-lg border-2 border-emerald-200">
-        <div className="px-5 pt-5 pb-3">
-          <h2 className="text-xl font-bold text-gray-900">
-            ✨ 이용자 맞춤 추천 프로그램
+        <div className="px-5 pt-5 pb-4">
+          <h2 className="text-2xl font-bold text-gray-900 mb-1">
+            이용자 맞춤 추천
           </h2>
-          <p className="text-sm text-gray-500 mt-1">
-            인지 {cogLabel}{wheelchair ? ' · 휠체어 사용' : ''} 기준 <span className="font-bold text-emerald-600">{recommended.length}개</span> 추천
-            {recommended.filter(p => isRecommendedForMonth(p, currentMonth)).length > 0 &&
-              <span className="ml-1 text-indigo-500">({currentMonth}월 추천 {recommended.filter(p => isRecommendedForMonth(p, currentMonth)).length}개 우선 표시)</span>
-            }
+          <p className="text-base text-gray-500">
+            인지 {cogLabel}{wheelchair ? ' · 휠체어 사용' : ''} 조건에 맞는
+            <span className="font-bold text-emerald-600 ml-1">{recommended.length}개</span> 프로그램
           </p>
+
+          {/* 카테고리 버튼 */}
+          <div className="mt-4">
+            <CategoryButtons
+              categories={recCategories}
+              activeCategory={recCategory}
+              onSelect={handleRecCategory}
+              counts={recCatCounts}
+            />
+          </div>
         </div>
 
+        {/* 카드 그리드 */}
         <div className="px-4 pb-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {recommended.map(prog => (
-              <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
-            ))}
-          </div>
+          {recFiltered.length === 0 ? (
+            <div className="text-center py-10 text-gray-400">
+              <p className="text-3xl mb-2">📂</p>
+              <p className="text-base font-medium">해당 카테고리에 추천 프로그램이 없습니다</p>
+            </div>
+          ) : (
+            <>
+              <p className="text-sm text-gray-400 mb-3">
+                {recCategory === 'all' ? '전체' : recCategory} {recFiltered.length}개
+                {recFiltered.length > recShowCount && ` (${recShowCount}개 표시 중)`}
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {recFiltered.slice(0, recShowCount).map(prog => (
+                  <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
+                ))}
+              </div>
+              {recFiltered.length > recShowCount && (
+                <button
+                  onClick={() => setRecShowCount(prev => prev + 10)}
+                  className="w-full mt-4 py-3 bg-emerald-50 text-emerald-700 rounded-xl text-base font-semibold hover:bg-emerald-100 transition-colors border-2 border-emerald-200"
+                >
+                  더보기 ({recFiltered.length - recShowCount}개 남음)
+                </button>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      {/* ===== 전체 프로그램 DB 토글 ===== */}
+      {/* ===== 전체 프로그램 DB ===== */}
       <div className="bg-white rounded-2xl shadow-lg border-2 border-indigo-100">
         <button
           onClick={() => setShowFullDB(!showFullDB)}
           className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 rounded-2xl transition-colors"
         >
           <div className="text-left">
-            <h2 className="text-xl font-bold text-gray-900">📚 전체 프로그램 DB</h2>
-            <p className="text-sm text-gray-500 mt-0.5">총 {PROGRAM_DB.length}개 · 카테고리별 검색 및 필터</p>
+            <h2 className="text-xl font-bold text-gray-900">전체 프로그램 DB</h2>
+            <p className="text-sm text-gray-500 mt-0.5">총 {PROGRAM_DB.length}개 · 카테고리별 검색</p>
           </div>
           <div className="flex items-center gap-2 text-indigo-500">
-            <span className="text-sm font-medium">{showFullDB ? '접기' : '펼치기'}</span>
+            <span className="text-sm font-semibold">{showFullDB ? '접기' : '펼치기'}</span>
             {showFullDB ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
         </button>
 
         {showFullDB && (
           <>
-            {/* 검색 + 필터 */}
-            <div className="px-5 pb-3 border-t border-gray-100 pt-3">
+            {/* 검색 */}
+            <div className="px-5 pb-3 border-t border-gray-100 pt-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     value={searchText}
-                    onChange={e => setSearchText(e.target.value)}
+                    onChange={e => { setSearchText(e.target.value); setFullShowCount(10); }}
                     placeholder="프로그램명 검색..."
-                    className="w-full pl-9 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-indigo-400 focus:outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-xl text-base focus:border-indigo-400 focus:outline-none"
                   />
                   {searchText && (
-                    <button onClick={() => setSearchText('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                      <X className="w-4 h-4 text-gray-400" />
+                    <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2">
+                      <X className="w-5 h-5 text-gray-400" />
                     </button>
                   )}
                 </div>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-3 py-2 border-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors ${hasActiveFilter ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
+                  className={`px-4 py-2.5 border-2 rounded-xl text-sm font-semibold flex items-center gap-1 transition-colors ${hasActiveFilter ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
                 >
                   {hasActiveFilter ? `필터 (${[filterCog.length > 0, filterWC, !!filterIndoor, filterMonth].filter(Boolean).length})` : '필터'}
                   {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -306,35 +406,35 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
               </div>
 
               {showFilters && (
-                <div className="mt-3 p-3 bg-gray-50 rounded-xl space-y-2.5">
-                  <div className="flex flex-wrap gap-1.5 items-center">
-                    <span className="text-xs font-bold text-gray-500 w-14">인지레벨</span>
+                <div className="mt-3 p-4 bg-gray-50 rounded-xl space-y-3">
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-sm font-bold text-gray-500 w-16">인지레벨</span>
                     {[1, 2, 3].map(lv => (
                       <button key={lv} onClick={() => toggleCog(lv)}
-                        className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                        className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-all ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-300 text-gray-500 bg-white'}`}>
                         {COG_LABEL[lv]}
                       </button>
                     ))}
                   </div>
-                  <div className="flex flex-wrap gap-1.5 items-center">
-                    <span className="text-xs font-bold text-gray-500 w-14">기타</span>
+                  <div className="flex flex-wrap gap-2 items-center">
+                    <span className="text-sm font-bold text-gray-500 w-16">기타</span>
                     <button onClick={() => setFilterWC(!filterWC)}
-                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterWC ? 'bg-blue-100 text-blue-700 border-blue-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                      className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-all ${filterWC ? 'bg-blue-100 text-blue-700 border-blue-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
                       휠체어 가능
                     </button>
                     {['실내', '실외'].map(v => (
                       <button key={v} onClick={() => setFilterIndoor(filterIndoor === v ? '' : v)}
-                        className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterIndoor === v ? (IN_COLOR[v] + ' border-current') : 'border-gray-300 text-gray-500 bg-white'}`}>
+                        className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-all ${filterIndoor === v ? (IN_COLOR[v] + ' border-current') : 'border-gray-300 text-gray-500 bg-white'}`}>
                         {v}
                       </button>
                     ))}
                     <button onClick={() => setFilterMonth(!filterMonth)}
-                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterMonth ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
-                      📅 {currentMonth}월 추천
+                      className={`text-sm px-3 py-1.5 rounded-lg border font-medium transition-all ${filterMonth ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                      {currentMonth}월 추천
                     </button>
                     {hasActiveFilter && (
                       <button onClick={() => { setFilterCog([]); setFilterWC(false); setFilterIndoor(''); setFilterMonth(false); setSearchText(''); }}
-                        className="text-xs px-2.5 py-1 rounded-full border border-red-200 text-red-500 bg-white hover:bg-red-50 font-medium">
+                        className="text-sm px-3 py-1.5 rounded-lg border border-red-200 text-red-500 bg-white hover:bg-red-50 font-medium">
                         초기화
                       </button>
                     )}
@@ -343,50 +443,47 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
               )}
             </div>
 
-            {/* 카테고리 탭 — flex-wrap */}
-            <div className="px-3 py-2 border-b border-gray-100">
-              <div className="flex flex-wrap gap-1.5">
-                {CATEGORIES.map(cat => {
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                        isActive ? `${cat.color} text-white shadow-sm` : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                      }`}>
-                      {cat.label}
-                      <span className={`ml-1 ${isActive ? 'text-white opacity-80' : 'text-gray-400'}`}>
-                        {cat.id === 'all' ? PROGRAM_DB.length : catCounts[cat.id] || 0}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+            {/* 카테고리 버튼 */}
+            <div className="px-5 py-3 border-b border-gray-100">
+              <CategoryButtons
+                categories={CATEGORIES}
+                activeCategory={activeCategory}
+                onSelect={handleFullCategory}
+                counts={catCounts}
+              />
             </div>
 
-            {/* 결과 카운트 */}
-            <div className="px-4 py-2 flex items-center justify-between">
-              <p className="text-xs text-gray-500">
+            {/* 결과 */}
+            <div className="px-4 py-3">
+              <p className="text-sm text-gray-500 mb-3">
                 {hasActiveFilter || activeCategory !== 'all'
                   ? <><span className="font-bold text-indigo-600">{filtered.length}개</span> 검색됨 (전체 {PROGRAM_DB.length}개)</>
                   : <span className="text-gray-400">프로그램 이름과 내용을 참고하세요</span>
                 }
               </p>
-            </div>
 
-            {/* 카드 그리드 */}
-            <div className="px-4 pb-4">
               {filtered.length === 0 ? (
-                <div className="text-center py-12 text-gray-400">
-                  <p className="text-4xl mb-2">🔍</p>
-                  <p className="font-medium">검색 결과가 없습니다</p>
+                <div className="text-center py-10 text-gray-400">
+                  <p className="text-3xl mb-2">🔍</p>
+                  <p className="text-base font-medium">검색 결과가 없습니다</p>
                   <p className="text-sm mt-1">필터 조건을 바꿔보세요</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {filtered.map(prog => (
-                    <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
-                  ))}
-                </div>
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {filtered.slice(0, fullShowCount).map(prog => (
+                      <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
+                    ))}
+                  </div>
+                  {filtered.length > fullShowCount && (
+                    <button
+                      onClick={() => setFullShowCount(prev => prev + 10)}
+                      className="w-full mt-4 py-3 bg-indigo-50 text-indigo-700 rounded-xl text-base font-semibold hover:bg-indigo-100 transition-colors border-2 border-indigo-200"
+                    >
+                      더보기 ({filtered.length - fullShowCount}개 남음)
+                    </button>
+                  )}
+                </>
               )}
             </div>
           </>
