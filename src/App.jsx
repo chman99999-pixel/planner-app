@@ -209,9 +209,17 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 
       // 스타일 정의 헬퍼
-      const border = `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>`;
-      const mkStyle = (id, bg, fg, b, sz, ha='Center') =>
-        `<Style ss:ID="${id}"><Interior ss:Color="${bg}" ss:Pattern="Solid"/><Font ss:Color="${fg}" ss:Bold="${b?1:0}" ss:Size="${sz}" ss:FontName="맑은 고딕"/><Alignment ss:Horizontal="${ha}" ss:Vertical="Center" ss:WrapText="1"/>${border}</Style>`;
+      const mkBorders = (l=1,t=1,r=1,b=1) =>
+        `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="${b}"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="${l}"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="${r}"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="${t}"/></Borders>`;
+      const mkStyle = (id, bg, fg, b, sz, ha='Center', bdr=mkBorders()) =>
+        `<Style ss:ID="${id}"><Interior ss:Color="${bg}" ss:Pattern="Solid"/><Font ss:Color="${fg}" ss:Bold="${b?1:0}" ss:Size="${sz}" ss:FontName="맑은 고딕"/><Alignment ss:Horizontal="${ha}" ss:Vertical="Center" ss:WrapText="1"/>${bdr}</Style>`;
+      // 바깥 테두리용 엣지 변형 스타일 생성 (_R, _B, _RB)
+      const OB = 2;
+      const mkEdge = (id, bg, fg, b, sz, ha='Center') => [
+        mkStyle(id+'_R', bg,fg,b,sz,ha, mkBorders(1,1,OB,1)),
+        mkStyle(id+'_B', bg,fg,b,sz,ha, mkBorders(1,1,1,OB)),
+        mkStyle(id+'_RB',bg,fg,b,sz,ha, mkBorders(1,1,OB,OB)),
+      ].join('');
 
       const stylesXml = `<Styles>
         ${mkStyle('hdr','#6366F1','#FFFFFF',1,15)}
@@ -219,12 +227,21 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
         ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
         ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
-        ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left')}
+        ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left',mkBorders(OB,OB,OB,1))}
         ${mkStyle('c_hd','#F3F4F6','#000000',1,11)} ${mkStyle('c_ho','#F3F4F6','#DC2626',1,11)}
+        ${mkStyle('c_hd_L','#F3F4F6','#000000',1,11,'Center',mkBorders(OB,1,1,1))}
+        ${mkStyle('c_hd_R','#F3F4F6','#000000',1,11,'Center',mkBorders(1,1,OB,1))}
+        ${mkStyle('c_ho_R','#F3F4F6','#DC2626',1,11,'Center',mkBorders(1,1,OB,1))}
         ${mkStyle('t_ce','#F9FAFB','#000000',0,10)} ${mkStyle('g_ce','#F3F4F6','#000000',0,10)}
+        ${mkStyle('t_ce_L', '#F9FAFB','#000000',0,10,'Center',mkBorders(OB,1,1,1))}
+        ${mkStyle('t_ce_LB','#F9FAFB','#000000',0,10,'Center',mkBorders(OB,1,1,OB))}
         ${mkStyle('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkStyle('fi_c','#74B9FF','#FFFFFF',1,10)}
         ${mkStyle('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkStyle('lu_c','#FFCCCC','#000000',0,10)}
         ${mkStyle('ho_c','#FEE2E2','#DC2626',1,12)} ${mkStyle('em_c','#FFFFFF','#000000',0,10)}
+        ${mkEdge('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkEdge('fi_c','#74B9FF','#FFFFFF',1,10)}
+        ${mkEdge('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkEdge('lu_c','#FFCCCC','#000000',0,10)}
+        ${mkEdge('ho_c','#FEE2E2','#DC2626',1,12)} ${mkEdge('em_c','#FFFFFF','#000000',0,10)}
+        ${mkEdge('g_ce','#F3F4F6','#000000',0,10)}
       </Styles>`;
 
       // 열 커버리지 추적 (병합 셀 rowspan 처리)
@@ -267,35 +284,46 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
 
       weeks.forEach((wk, wi) => {
         const wd = getWeekDates(wk);
-        // 주차 제목
+        // 주차 제목 — 굵은 바깥 테두리 (상+좌+우 굵게, 하 얇게)
         rows += buildRow([{ st:'w_hd', v:`📌 ${wi+1}주차`, ma:5 }], 30);
-        // 요일 행 (시간 MergeDown:1 → 2행 병합)
+        // 요일 행: 시간셀 두꺼운 왼쪽, 금요일셀 두꺼운 오른쪽
         rows += buildRow([
-          { st:'c_hd', v:'시간', md:1 },
-          ...['월','화','수','목','금'].map((d, i) => ({ st: wd[i]?.isHoliday ? 'c_ho' : 'c_hd', v:`${d}요일` })),
+          { st:'c_hd_L', v:'시간', md:1 },
+          ...['월','화','수','목','금'].map((d, i) => {
+            const isLast = i === 4;
+            const isHol = wd[i]?.isHoliday;
+            return { st: isLast ? (isHol ? 'c_ho_R' : 'c_hd_R') : (isHol ? 'c_ho' : 'c_hd'), v:`${d}요일` };
+          }),
         ], 26);
-        // 날짜 행 (1열은 위 병합으로 커버됨)
-        rows += buildRow(wd.map(info => {
-          if (!info) return { st:'c_hd', v:'' };
-          return { st: info.isHoliday ? 'c_ho' : 'c_hd', v:`${info.day}일${info.holidayName ? ' ('+info.holidayName+')' : ''}` };
+        // 날짜 행 (1열은 위 병합으로 커버됨), 금요일셀 두꺼운 오른쪽
+        rows += buildRow(wd.map((info, i) => {
+          const isLast = i === 4;
+          const isHol = info?.isHoliday;
+          if (!info) return { st: isLast ? 'c_hd_R' : 'c_hd', v:'' };
+          return { st: isLast ? (isHol ? 'c_ho_R' : 'c_hd_R') : (isHol ? 'c_ho' : 'c_hd'),
+                   v:`${info.day}일${info.holidayName ? ' ('+info.holidayName+')' : ''}` };
         }), 26);
-        // 시간대별 행
+        // 시간대별 행: 첫열 두꺼운 왼쪽, 마지막열 두꺼운 오른쪽, 마지막행 두꺼운 아래쪽
         timeSlots.forEach((slot, slotIdx) => {
-          const specs = [{ st:'t_ce', v:slot }];
-          wd.forEach(info => {
-            if (!info) { specs.push({ st:'g_ce', v:'' }); return; }
+          const isLastRow = slotIdx === timeSlots.length - 1;
+          const specs = [{ st: isLastRow ? 't_ce_LB' : 't_ce_L', v:slot }];
+          wd.forEach((info, i) => {
+            const isLastCol = i === 4;
+            const suf = isLastRow && isLastCol ? '_RB' : isLastRow ? '_B' : isLastCol ? '_R' : '';
+            if (!info) { specs.push({ st:'g_ce'+suf, v:'' }); return; }
             if (info.isHoliday) {
-              if (slotIdx === 0) specs.push({ st:'ho_c', v: info.holidayName || '휴일', md: timeSlots.length - 1 });
-              return; // 병합된 셀은 생략
+              // 공휴일 병합셀: md로 마지막 행까지 확장 → 항상 굵은 아래쪽 필요
+              if (slotIdx === 0) specs.push({ st:'ho_c'+(isLastCol?'_RB':'_B'), v: info.holidayName || '휴일', md: timeSlots.length - 1 });
+              return;
             }
-            if (slot === '12:00~13:00') { specs.push({ st:'lu_c', v:'점심식사 및 위생지원' }); return; }
+            if (slot === '12:00~13:00') { specs.push({ st:'lu_c'+suf, v:'점심식사 및 위생지원' }); return; }
             const scheds = getAtTime(info.dateStr, slot);
             if (scheds.length) {
               const s = scheds[0];
-              const st = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' : 'fi_c';
-              specs.push({ st, v: s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name });
+              const base = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' : 'fi_c';
+              specs.push({ st:base+suf, v: s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name });
             } else {
-              specs.push({ st:'em_c', v:'' });
+              specs.push({ st:'em_c'+suf, v:'' });
             }
           });
           rows += buildRow(specs, 30);
