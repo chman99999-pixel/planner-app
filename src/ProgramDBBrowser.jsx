@@ -176,6 +176,7 @@ function ProgramCard({ prog, currentMonth }) {
 }
 
 export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveInfo }) {
+  const [showFullDB, setShowFullDB] = useState(false);
   const [activeCategory, setActiveCategory] = useState('all');
   const [searchText, setSearchText] = useState('');
   const [filterCog, setFilterCog] = useState([]);
@@ -183,6 +184,26 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
   const [filterIndoor, setFilterIndoor] = useState('');
   const [filterMonth, setFilterMonth] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
+
+  // 인지능력 매핑: 상→3, 중→2, 하→1
+  const cogLevel = cognitiveInfo?.cognitive === '상' ? 3 : cognitiveInfo?.cognitive === '중' ? 2 : 1;
+
+  // 추천 프로그램: 인지능력 + 휠체어 필터 → 이달 추천 우선 정렬
+  const recommended = useMemo(() => {
+    const list = PROGRAM_DB.filter(p => {
+      if (!p.cognitiveLevel.includes(cogLevel)) return false;
+      if (wheelchair && p.wheelchair === 'X') return false;
+      return true;
+    });
+    list.sort((a, b) => {
+      const aMonth = isRecommendedForMonth(a, currentMonth);
+      const bMonth = isRecommendedForMonth(b, currentMonth);
+      if (aMonth && !bMonth) return -1;
+      if (!aMonth && bMonth) return 1;
+      return 0;
+    });
+    return list;
+  }, [cogLevel, wheelchair, currentMonth]);
 
   const filtered = useMemo(() => {
     return PROGRAM_DB.filter(p => {
@@ -212,130 +233,163 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
     return counts;
   }, []);
 
+  const cogLabel = cogLevel === 3 ? '높음' : cogLevel === 2 ? '중간' : '낮음';
+
   return (
-    <div className="bg-white rounded-2xl shadow-lg border-2 border-indigo-100">
-      {/* 헤더 */}
-      <div className="px-5 pt-5 pb-3 border-b border-gray-100">
-        <div className="flex items-center justify-between mb-3">
-          <div>
-            <h2 className="text-xl font-bold text-gray-900">📚 프로그램 DB</h2>
-            <p className="text-sm text-gray-500 mt-0.5">총 {PROGRAM_DB.length}개 프로그램</p>
-          </div>
+    <div className="space-y-4">
+      {/* ===== 추천 프로그램 섹션 ===== */}
+      <div className="bg-white rounded-2xl shadow-lg border-2 border-emerald-200">
+        <div className="px-5 pt-5 pb-3">
+          <h2 className="text-xl font-bold text-gray-900">
+            ✨ 이용자 맞춤 추천 프로그램
+          </h2>
+          <p className="text-sm text-gray-500 mt-1">
+            인지 {cogLabel}{wheelchair ? ' · 휠체어 사용' : ''} 기준 <span className="font-bold text-emerald-600">{recommended.length}개</span> 추천
+            {recommended.filter(p => isRecommendedForMonth(p, currentMonth)).length > 0 &&
+              <span className="ml-1 text-indigo-500">({currentMonth}월 추천 {recommended.filter(p => isRecommendedForMonth(p, currentMonth)).length}개 우선 표시)</span>
+            }
+          </p>
         </div>
 
-        {/* 검색 + 필터 토글 */}
-        <div className="flex gap-2">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              value={searchText}
-              onChange={e => setSearchText(e.target.value)}
-              placeholder="프로그램명 검색..."
-              className="w-full pl-9 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-indigo-400 focus:outline-none"
-            />
-            {searchText && (
-              <button onClick={() => setSearchText('')} className="absolute right-2 top-1/2 -translate-y-1/2">
-                <X className="w-4 h-4 text-gray-400" />
-              </button>
-            )}
-          </div>
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`px-3 py-2 border-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors ${hasActiveFilter ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
-          >
-            {hasActiveFilter ? `필터 (${[filterCog.length > 0, filterWC, !!filterIndoor, filterMonth].filter(Boolean).length})` : '필터'}
-            {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* 상세 필터 */}
-        {showFilters && (
-          <div className="mt-3 p-3 bg-gray-50 rounded-xl space-y-2.5">
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-xs font-bold text-gray-500 w-14">인지레벨</span>
-              {[1, 2, 3].map(lv => (
-                <button key={lv} onClick={() => toggleCog(lv)}
-                  className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-300 text-gray-500 bg-white'}`}>
-                  {COG_LABEL[lv]}
-                </button>
-              ))}
-            </div>
-            <div className="flex flex-wrap gap-1.5 items-center">
-              <span className="text-xs font-bold text-gray-500 w-14">기타</span>
-              <button onClick={() => setFilterWC(!filterWC)}
-                className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterWC ? 'bg-blue-100 text-blue-700 border-blue-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
-                휠체어 가능
-              </button>
-              {['실내', '실외'].map(v => (
-                <button key={v} onClick={() => setFilterIndoor(filterIndoor === v ? '' : v)}
-                  className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterIndoor === v ? (IN_COLOR[v] + ' border-current') : 'border-gray-300 text-gray-500 bg-white'}`}>
-                  {v}
-                </button>
-              ))}
-              <button onClick={() => setFilterMonth(!filterMonth)}
-                className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterMonth ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
-                📅 {currentMonth}월 추천
-              </button>
-              {hasActiveFilter && (
-                <button onClick={() => { setFilterCog([]); setFilterWC(false); setFilterIndoor(''); setFilterMonth(false); setSearchText(''); }}
-                  className="text-xs px-2.5 py-1 rounded-full border border-red-200 text-red-500 bg-white hover:bg-red-50 font-medium">
-                  초기화
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* 카테고리 탭 */}
-      <div className="px-3 py-2 border-b border-gray-100 overflow-x-auto">
-        <div className="flex gap-1.5 min-w-max">
-          {CATEGORIES.map(cat => {
-            const isActive = activeCategory === cat.id;
-            return (
-              <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
-                  isActive ? `${cat.color} text-white shadow-sm` : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}>
-                {cat.label}
-                <span className={`ml-1 ${isActive ? 'text-white opacity-80' : 'text-gray-400'}`}>
-                  {cat.id === 'all' ? PROGRAM_DB.length : catCounts[cat.id] || 0}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 결과 카운트 */}
-      <div className="px-4 py-2 flex items-center justify-between">
-        <p className="text-xs text-gray-500">
-          {hasActiveFilter || activeCategory !== 'all'
-            ? <><span className="font-bold text-indigo-600">{filtered.length}개</span> 검색됨 (전체 {PROGRAM_DB.length}개)</>
-            : <span className="text-gray-400">프로그램 이름과 내용을 참고하세요</span>
-          }
-        </p>
-      </div>
-
-      {/* 카드 그리드 */}
-      <div className="px-4 pb-4">
-        {filtered.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <p className="text-4xl mb-2">🔍</p>
-            <p className="font-medium">검색 결과가 없습니다</p>
-            <p className="text-sm mt-1">필터 조건을 바꿔보세요</p>
-          </div>
-        ) : (
+        <div className="px-4 pb-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {filtered.map(prog => (
-              <ProgramCard
-                key={prog.id}
-                prog={prog}
-                currentMonth={currentMonth}
-              />
+            {recommended.map(prog => (
+              <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
             ))}
           </div>
+        </div>
+      </div>
+
+      {/* ===== 전체 프로그램 DB 토글 ===== */}
+      <div className="bg-white rounded-2xl shadow-lg border-2 border-indigo-100">
+        <button
+          onClick={() => setShowFullDB(!showFullDB)}
+          className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 rounded-2xl transition-colors"
+        >
+          <div className="text-left">
+            <h2 className="text-xl font-bold text-gray-900">📚 전체 프로그램 DB</h2>
+            <p className="text-sm text-gray-500 mt-0.5">총 {PROGRAM_DB.length}개 · 카테고리별 검색 및 필터</p>
+          </div>
+          <div className="flex items-center gap-2 text-indigo-500">
+            <span className="text-sm font-medium">{showFullDB ? '접기' : '펼치기'}</span>
+            {showFullDB ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
+          </div>
+        </button>
+
+        {showFullDB && (
+          <>
+            {/* 검색 + 필터 */}
+            <div className="px-5 pb-3 border-t border-gray-100 pt-3">
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchText}
+                    onChange={e => setSearchText(e.target.value)}
+                    placeholder="프로그램명 검색..."
+                    className="w-full pl-9 pr-3 py-2 border-2 border-gray-200 rounded-lg text-sm focus:border-indigo-400 focus:outline-none"
+                  />
+                  {searchText && (
+                    <button onClick={() => setSearchText('')} className="absolute right-2 top-1/2 -translate-y-1/2">
+                      <X className="w-4 h-4 text-gray-400" />
+                    </button>
+                  )}
+                </div>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`px-3 py-2 border-2 rounded-lg text-sm font-medium flex items-center gap-1 transition-colors ${hasActiveFilter ? 'border-indigo-400 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-indigo-300'}`}
+                >
+                  {hasActiveFilter ? `필터 (${[filterCog.length > 0, filterWC, !!filterIndoor, filterMonth].filter(Boolean).length})` : '필터'}
+                  {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                </button>
+              </div>
+
+              {showFilters && (
+                <div className="mt-3 p-3 bg-gray-50 rounded-xl space-y-2.5">
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-xs font-bold text-gray-500 w-14">인지레벨</span>
+                    {[1, 2, 3].map(lv => (
+                      <button key={lv} onClick={() => toggleCog(lv)}
+                        className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                        {COG_LABEL[lv]}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5 items-center">
+                    <span className="text-xs font-bold text-gray-500 w-14">기타</span>
+                    <button onClick={() => setFilterWC(!filterWC)}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterWC ? 'bg-blue-100 text-blue-700 border-blue-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                      휠체어 가능
+                    </button>
+                    {['실내', '실외'].map(v => (
+                      <button key={v} onClick={() => setFilterIndoor(filterIndoor === v ? '' : v)}
+                        className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterIndoor === v ? (IN_COLOR[v] + ' border-current') : 'border-gray-300 text-gray-500 bg-white'}`}>
+                        {v}
+                      </button>
+                    ))}
+                    <button onClick={() => setFilterMonth(!filterMonth)}
+                      className={`text-xs px-2.5 py-1 rounded-full border font-medium transition-all ${filterMonth ? 'bg-indigo-100 text-indigo-700 border-indigo-300' : 'border-gray-300 text-gray-500 bg-white'}`}>
+                      📅 {currentMonth}월 추천
+                    </button>
+                    {hasActiveFilter && (
+                      <button onClick={() => { setFilterCog([]); setFilterWC(false); setFilterIndoor(''); setFilterMonth(false); setSearchText(''); }}
+                        className="text-xs px-2.5 py-1 rounded-full border border-red-200 text-red-500 bg-white hover:bg-red-50 font-medium">
+                        초기화
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* 카테고리 탭 — flex-wrap */}
+            <div className="px-3 py-2 border-b border-gray-100">
+              <div className="flex flex-wrap gap-1.5">
+                {CATEGORIES.map(cat => {
+                  const isActive = activeCategory === cat.id;
+                  return (
+                    <button key={cat.id} onClick={() => setActiveCategory(cat.id)}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all ${
+                        isActive ? `${cat.color} text-white shadow-sm` : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}>
+                      {cat.label}
+                      <span className={`ml-1 ${isActive ? 'text-white opacity-80' : 'text-gray-400'}`}>
+                        {cat.id === 'all' ? PROGRAM_DB.length : catCounts[cat.id] || 0}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* 결과 카운트 */}
+            <div className="px-4 py-2 flex items-center justify-between">
+              <p className="text-xs text-gray-500">
+                {hasActiveFilter || activeCategory !== 'all'
+                  ? <><span className="font-bold text-indigo-600">{filtered.length}개</span> 검색됨 (전체 {PROGRAM_DB.length}개)</>
+                  : <span className="text-gray-400">프로그램 이름과 내용을 참고하세요</span>
+                }
+              </p>
+            </div>
+
+            {/* 카드 그리드 */}
+            <div className="px-4 pb-4">
+              {filtered.length === 0 ? (
+                <div className="text-center py-12 text-gray-400">
+                  <p className="text-4xl mb-2">🔍</p>
+                  <p className="font-medium">검색 결과가 없습니다</p>
+                  <p className="text-sm mt-1">필터 조건을 바꿔보세요</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  {filtered.map(prog => (
+                    <ProgramCard key={prog.id} prog={prog} currentMonth={currentMonth} />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
     </div>
