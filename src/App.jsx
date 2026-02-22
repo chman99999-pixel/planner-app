@@ -222,8 +222,8 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       ].join('');
 
       const stylesXml = `<Styles>
-        ${mkStyle('hdr','#6366F1','#FFFFFF',1,15)}
-        ${mkStyle('sub','#FFFFFF','#666666',0,11)}
+        ${mkStyle('hdr','#6366F1','#FFFFFF',1,15,'Center',mkBorders(OB,OB,OB,1))}
+        ${mkStyle('sub','#FFFFFF','#666666',0,11,'Center',mkBorders(OB,1,OB,OB))}
         ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
         ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
         ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
