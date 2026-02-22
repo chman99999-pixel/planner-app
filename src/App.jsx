@@ -211,71 +211,121 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
 
   const downloadExcelFile = () => {
     try {
-      const script = document.createElement('script');
-      script.src = 'https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js';
-      script.onload = () => {
-        const XLSX = window.XLSX;
-        const wb = XLSX.utils.book_new();
-        const wsData = [];
+      // 타이틀
+      let tableHtml = '';
+      tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:8px;">
+        <tr><td colspan="6" style="background:#6366F1;color:white;font-size:20px;font-weight:bold;text-align:center;padding:14px;border:2px solid black;">📋 ${year}년 ${month}월 ${title}</td></tr>
+        <tr><td colspan="6" style="text-align:center;padding:10px;color:#555;font-size:14px;border:2px solid black;border-top:none;">성인 발달장애인 주간활동센터</td></tr>
+      </table>`;
 
-        wsData.push([`📋 ${year}년 ${month}월 ${title}`]);
-        wsData.push(['성인 발달장애인 주간활동센터']);
-        wsData.push([]);
-        wsData.push(['전체행사', '고정프로그램', '내외부프로그램', '참여형프로그램', '창의형프로그램', '점심시간']);
-        wsData.push([]);
+      // 범례
+      tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
+        <tr>
+          <td style="background:#ff6b6b;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">전체행사</td>
+          <td style="background:#74b9ff;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">고정프로그램</td>
+          <td style="background:#a29bfe;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">내외부프로그램</td>
+          <td style="background:#55efc4;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">참여형프로그램</td>
+          <td style="background:#fdcb6e;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">창의형프로그램</td>
+          <td style="background:#ffcccc;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">점심시간</td>
+        </tr>
+      </table>`;
 
-        weeks.forEach((wk, wi) => {
-          const wd = getWeekDates(wk);
-          wsData.push([`📌 ${wi + 1}주차`]);
+      // 주차별 표
+      weeks.forEach((wk, wi) => {
+        const wd = getWeekDates(wk);
+        tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:20px;border:2px solid black;">`;
 
-          const dayRow = [''];
-          wd.forEach((info, i) => {
-            dayRow.push(info ? `${['월','화','수','목','금'][i]}요일` : '');
-          });
-          wsData.push(dayRow);
+        // 주차 제목
+        tableHtml += `<tr><td colspan="6" style="background:#E5E7EB;font-weight:bold;font-size:15px;padding:10px;border-bottom:2px solid black;">📌 ${wi + 1}주차</td></tr>`;
 
-          const dateRow = ['시간'];
+        // 요일 행
+        tableHtml += `<tr>`;
+        tableHtml += `<th rowspan="2" style="background:#F3F4F6;font-weight:bold;text-align:center;padding:10px;border:1px solid black;vertical-align:middle;width:90px;font-size:14px;">시간</th>`;
+        ['월','화','수','목','금'].forEach((d, i) => {
+          const isH = wd[i]?.isHoliday;
+          tableHtml += `<th style="background:#F3F4F6;font-weight:bold;text-align:center;padding:10px;border:1px solid black;font-size:14px;${isH ? 'color:#DC2626;' : ''}">${d}요일</th>`;
+        });
+        tableHtml += `</tr>`;
+
+        // 날짜 행
+        tableHtml += `<tr>`;
+        wd.forEach((info) => {
+          if (info) {
+            tableHtml += `<th style="background:#F3F4F6;font-weight:bold;text-align:center;padding:8px;border:1px solid black;font-size:14px;${info.isHoliday ? 'color:#DC2626;' : ''}">${info.day}일${info.holidayName ? '<br>(' + info.holidayName + ')' : ''}</th>`;
+          } else {
+            tableHtml += `<th style="background:#F3F4F6;border:1px solid black;"></th>`;
+          }
+        });
+        tableHtml += `</tr>`;
+
+        // 시간대별 행
+        timeSlots.forEach((slot, slotIdx) => {
+          tableHtml += `<tr>`;
+          tableHtml += `<td style="background:#F9FAFB;text-align:center;padding:8px;border:1px solid black;font-size:13px;">${slot}</td>`;
+
           wd.forEach((info) => {
-            if (info) {
-              dateRow.push(info.holidayName ? `${info.day}일 (${info.holidayName})` : `${info.day}일`);
+            if (!info) {
+              tableHtml += `<td style="background:#F3F4F6;border:1px solid black;"></td>`;
+              return;
+            }
+            if (info.isHoliday) {
+              if (slotIdx === 0) {
+                tableHtml += `<td rowspan="${timeSlots.length}" style="background:#FEE2E2;color:#DC2626;text-align:center;padding:10px;border:1px solid black;font-weight:bold;font-size:16px;vertical-align:middle;">${info.holidayName || '휴일'}</td>`;
+              }
+              return;
+            }
+            if (slot === '12:00~13:00') {
+              tableHtml += `<td style="background:#FFCCCC;color:black;text-align:center;padding:8px;border:1px solid black;font-size:13px;">점심식사 및 위생지원</td>`;
+              return;
+            }
+            const scheds = getAtTime(info.dateStr, slot);
+            if (scheds.length > 0) {
+              const s = scheds[0];
+              let bg = '#74b9ff', tc = 'white';
+              if (s.type === 'event') bg = '#ff6b6b';
+              else if (s.type === 'external') bg = '#a29bfe';
+              else if (s.type === 'participatory') { bg = '#55efc4'; tc = 'black'; }
+              else if (s.type === 'creative') { bg = '#fdcb6e'; tc = 'black'; }
+              const dn = s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name;
+              tableHtml += `<td style="background:${bg};color:${tc};text-align:center;padding:8px;border:1px solid black;font-weight:bold;font-size:13px;">${dn}</td>`;
             } else {
-              dateRow.push('');
+              tableHtml += `<td style="border:1px solid black;"></td>`;
             }
           });
-          wsData.push(dateRow);
 
-          timeSlots.forEach((slot, slotIdx) => {
-            const row = [slot];
-            wd.forEach((info) => {
-              if (!info) {
-                row.push('');
-              } else if (info.isHoliday) {
-                row.push(slotIdx === 0 ? (info.holidayName || '휴일') : '');
-              } else if (slot === '12:00~13:00') {
-                row.push('점심식사 및 위생지원');
-              } else {
-                const scheds = getAtTime(info.dateStr, slot);
-                if (scheds.length > 0) {
-                  const s = scheds[0];
-                  const displayName = s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name;
-                  row.push(displayName);
-                } else {
-                  row.push('');
-                }
-              }
-            });
-            wsData.push(row);
-          });
-
-          wsData.push([]);
+          tableHtml += `</tr>`;
         });
 
-        const ws = XLSX.utils.aoa_to_sheet(wsData);
-        ws['!cols'] = [{ wch: 14 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }, { wch: 20 }];
-        XLSX.utils.book_append_sheet(wb, ws, `${month}월 계획서`);
-        XLSX.writeFile(wb, `${year}년_${month}월_주간활동계획서.xlsx`);
-      };
-      document.head.appendChild(script);
+        tableHtml += `</table>`;
+      });
+
+      // 완전한 HTML 문서로 감싸기 (Excel이 인식하는 형식)
+      const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
+        xmlns:x="urn:schemas-microsoft-com:office:excel"
+        xmlns="http://www.w3.org/TR/REC-html40">
+        <head>
+          <meta charset="UTF-8">
+          <!--[if gte mso 9]><xml>
+            <x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
+              <x:Name>${month}월 계획서</x:Name>
+              <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
+            </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook>
+          </xml><![endif]-->
+          <style>
+            body { font-family: Arial, sans-serif; }
+            table { border-collapse: collapse; }
+          </style>
+        </head>
+        <body>${tableHtml}</body>
+      </html>`;
+
+      const blob = new Blob([fullHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${year}년_${month}월_주간활동계획서.xls`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       alert('엑셀 파일 생성에 실패했습니다: ' + e.message);
     }
