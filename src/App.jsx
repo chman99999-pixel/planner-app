@@ -211,115 +211,126 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
 
   const downloadExcelFile = () => {
     try {
+      // XML 특수문자 이스케이프
+      const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+      // 스타일 정의 헬퍼
+      const border = `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/></Borders>`;
+      const mkStyle = (id, bg, fg, b, sz, ha='Center') =>
+        `<Style ss:ID="${id}"><Interior ss:Color="${bg}" ss:Pattern="Solid"/><Font ss:Color="${fg}" ss:Bold="${b?1:0}" ss:Size="${sz}" ss:FontName="맑은 고딕"/><Alignment ss:Horizontal="${ha}" ss:Vertical="Center" ss:WrapText="1"/>${border}</Style>`;
+
+      const stylesXml = `<Styles>
+        ${mkStyle('hdr','#6366F1','#FFFFFF',1,15)}
+        ${mkStyle('sub','#FFFFFF','#666666',0,11)}
+        ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
+        ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
+        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_pa','#55EFC4','#000000',1,11)}
+        ${mkStyle('l_cr','#FDCB6E','#000000',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
+        ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left')}
+        ${mkStyle('c_hd','#F3F4F6','#000000',1,11)} ${mkStyle('c_ho','#F3F4F6','#DC2626',1,11)}
+        ${mkStyle('t_ce','#F9FAFB','#000000',0,10)} ${mkStyle('g_ce','#F3F4F6','#000000',0,10)}
+        ${mkStyle('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkStyle('fi_c','#74B9FF','#FFFFFF',1,10)}
+        ${mkStyle('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkStyle('pa_c','#55EFC4','#000000',1,10)}
+        ${mkStyle('cr_c','#FDCB6E','#000000',1,10)} ${mkStyle('lu_c','#FFCCCC','#000000',0,10)}
+        ${mkStyle('ho_c','#FEE2E2','#DC2626',1,12)} ${mkStyle('em_c','#FFFFFF','#000000',0,10)}
+      </Styles>`;
+
+      // 열 커버리지 추적 (병합 셀 rowspan 처리)
+      const cov = {};
+      const buildRow = (specs, h) => {
+        let xml = h ? `<Row ss:Height="${h}">` : '<Row>';
+        let col = 1;
+        const newCov = {};
+        specs.forEach(sp => {
+          while (cov[col]) col++;
+          const ma = sp.ma || 0, md = sp.md || 0;
+          let a = `ss:StyleID="${sp.st}" ss:Index="${col}"`;
+          if (ma) a += ` ss:MergeAcross="${ma}"`;
+          if (md) {
+            a += ` ss:MergeDown="${md}"`;
+            for (let c = col; c <= col + ma; c++) newCov[c] = md;
+          }
+          xml += sp.v != null
+            ? `<Cell ${a}><Data ss:Type="String">${esc(sp.v)}</Data></Cell>`
+            : `<Cell ${a}/>`;
+          col += ma + 1;
+        });
+        xml += '</Row>';
+        // 커버리지 갱신: 기존 감소 → 신규 추가
+        Object.keys(cov).forEach(k => { cov[k]--; if (cov[k] <= 0) delete cov[k]; });
+        Object.entries(newCov).forEach(([k, v]) => { cov[k] = v; });
+        return xml;
+      };
+
+      let rows = '';
       // 타이틀
-      let tableHtml = '';
-      tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:8px;">
-        <tr><td colspan="6" style="background:#6366F1;color:white;font-size:20px;font-weight:bold;text-align:center;padding:14px;border:2px solid black;">📋 ${year}년 ${month}월 ${title}</td></tr>
-        <tr><td colspan="6" style="text-align:center;padding:10px;color:#555;font-size:14px;border:2px solid black;border-top:none;">성인 발달장애인 주간활동센터</td></tr>
-      </table>`;
-
+      rows += buildRow([{ st:'hdr', v:`📋 ${year}년 ${month}월 ${title}`, ma:5 }], 36);
+      rows += buildRow([{ st:'sub', v:'성인 발달장애인 주간활동센터', ma:5 }], 26);
+      rows += buildRow([{ st:'spc', ma:5 }], 8);
       // 범례
-      tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:16px;">
-        <tr>
-          <td style="background:#ff6b6b;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">전체행사</td>
-          <td style="background:#74b9ff;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">고정프로그램</td>
-          <td style="background:#a29bfe;color:white;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">내외부프로그램</td>
-          <td style="background:#55efc4;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">참여형프로그램</td>
-          <td style="background:#fdcb6e;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">창의형프로그램</td>
-          <td style="background:#ffcccc;color:black;text-align:center;padding:10px;border:2px solid black;font-weight:bold;font-size:14px;">점심시간</td>
-        </tr>
-      </table>`;
+      rows += buildRow([
+        {st:'l_ev',v:'전체행사'},{st:'l_fi',v:'고정프로그램'},{st:'l_ex',v:'내외부프로그램'},
+        {st:'l_pa',v:'참여형프로그램'},{st:'l_cr',v:'창의형프로그램'},{st:'l_lu',v:'점심시간'},
+      ], 28);
+      rows += buildRow([{ st:'spc', ma:5 }], 8);
 
-      // 주차별 표
       weeks.forEach((wk, wi) => {
         const wd = getWeekDates(wk);
-        tableHtml += `<table style="border-collapse:collapse;width:100%;margin-bottom:20px;border:2px solid black;">`;
-
         // 주차 제목
-        tableHtml += `<tr><td colspan="6" style="background:#E5E7EB;font-weight:bold;font-size:15px;padding:10px;border-bottom:2px solid black;">📌 ${wi + 1}주차</td></tr>`;
-
-        // 요일 행
-        tableHtml += `<tr>`;
-        tableHtml += `<th rowspan="2" style="background:#F3F4F6;font-weight:bold;text-align:center;padding:10px;border:1px solid black;vertical-align:middle;width:90px;font-size:14px;">시간</th>`;
-        ['월','화','수','목','금'].forEach((d, i) => {
-          const isH = wd[i]?.isHoliday;
-          tableHtml += `<th style="background:#F3F4F6;font-weight:bold;text-align:center;padding:10px;border:1px solid black;font-size:14px;${isH ? 'color:#DC2626;' : ''}">${d}요일</th>`;
-        });
-        tableHtml += `</tr>`;
-
-        // 날짜 행
-        tableHtml += `<tr>`;
-        wd.forEach((info) => {
-          if (info) {
-            tableHtml += `<th style="background:#F3F4F6;font-weight:bold;text-align:center;padding:8px;border:1px solid black;font-size:14px;${info.isHoliday ? 'color:#DC2626;' : ''}">${info.day}일${info.holidayName ? '<br>(' + info.holidayName + ')' : ''}</th>`;
-          } else {
-            tableHtml += `<th style="background:#F3F4F6;border:1px solid black;"></th>`;
-          }
-        });
-        tableHtml += `</tr>`;
-
+        rows += buildRow([{ st:'w_hd', v:`📌 ${wi+1}주차`, ma:5 }], 30);
+        // 요일 행 (시간 MergeDown:1 → 2행 병합)
+        rows += buildRow([
+          { st:'c_hd', v:'시간', md:1 },
+          ...['월','화','수','목','금'].map((d, i) => ({ st: wd[i]?.isHoliday ? 'c_ho' : 'c_hd', v:`${d}요일` })),
+        ], 26);
+        // 날짜 행 (1열은 위 병합으로 커버됨)
+        rows += buildRow(wd.map(info => {
+          if (!info) return { st:'c_hd', v:'' };
+          return { st: info.isHoliday ? 'c_ho' : 'c_hd', v:`${info.day}일${info.holidayName ? ' ('+info.holidayName+')' : ''}` };
+        }), 26);
         // 시간대별 행
         timeSlots.forEach((slot, slotIdx) => {
-          tableHtml += `<tr>`;
-          tableHtml += `<td style="background:#F9FAFB;text-align:center;padding:8px;border:1px solid black;font-size:13px;">${slot}</td>`;
-
-          wd.forEach((info) => {
-            if (!info) {
-              tableHtml += `<td style="background:#F3F4F6;border:1px solid black;"></td>`;
-              return;
-            }
+          const specs = [{ st:'t_ce', v:slot }];
+          wd.forEach(info => {
+            if (!info) { specs.push({ st:'g_ce', v:'' }); return; }
             if (info.isHoliday) {
-              if (slotIdx === 0) {
-                tableHtml += `<td rowspan="${timeSlots.length}" style="background:#FEE2E2;color:#DC2626;text-align:center;padding:10px;border:1px solid black;font-weight:bold;font-size:16px;vertical-align:middle;">${info.holidayName || '휴일'}</td>`;
-              }
-              return;
+              if (slotIdx === 0) specs.push({ st:'ho_c', v: info.holidayName || '휴일', md: timeSlots.length - 1 });
+              return; // 병합된 셀은 생략
             }
-            if (slot === '12:00~13:00') {
-              tableHtml += `<td style="background:#FFCCCC;color:black;text-align:center;padding:8px;border:1px solid black;font-size:13px;">점심식사 및 위생지원</td>`;
-              return;
-            }
+            if (slot === '12:00~13:00') { specs.push({ st:'lu_c', v:'점심식사 및 위생지원' }); return; }
             const scheds = getAtTime(info.dateStr, slot);
-            if (scheds.length > 0) {
+            if (scheds.length) {
               const s = scheds[0];
-              let bg = '#74b9ff', tc = 'white';
-              if (s.type === 'event') bg = '#ff6b6b';
-              else if (s.type === 'external') bg = '#a29bfe';
-              else if (s.type === 'participatory') { bg = '#55efc4'; tc = 'black'; }
-              else if (s.type === 'creative') { bg = '#fdcb6e'; tc = 'black'; }
-              const dn = s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name;
-              tableHtml += `<td style="background:${bg};color:${tc};text-align:center;padding:8px;border:1px solid black;font-weight:bold;font-size:13px;">${dn}</td>`;
+              const st = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' :
+                         s.type==='participatory' ? 'pa_c' : s.type==='creative' ? 'cr_c' : 'fi_c';
+              specs.push({ st, v: s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name });
             } else {
-              tableHtml += `<td style="border:1px solid black;"></td>`;
+              specs.push({ st:'em_c', v:'' });
             }
           });
-
-          tableHtml += `</tr>`;
+          rows += buildRow(specs, 30);
         });
-
-        tableHtml += `</table>`;
+        rows += buildRow([{ st:'spc', ma:5 }], 10);
       });
 
-      // 완전한 HTML 문서로 감싸기 (Excel이 인식하는 형식)
-      const fullHtml = `<html xmlns:o="urn:schemas-microsoft-com:office:office"
-        xmlns:x="urn:schemas-microsoft-com:office:excel"
-        xmlns="http://www.w3.org/TR/REC-html40">
-        <head>
-          <meta charset="UTF-8">
-          <!--[if gte mso 9]><xml>
-            <x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet>
-              <x:Name>${month}월 계획서</x:Name>
-              <x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions>
-            </x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook>
-          </xml><![endif]-->
-          <style>
-            body { font-family: Arial, sans-serif; }
-            table { border-collapse: collapse; }
-          </style>
-        </head>
-        <body>${tableHtml}</body>
-      </html>`;
+      // Excel XML Spreadsheet 정식 포맷 (경고 없음)
+      const xml = [
+        `<?xml version="1.0" encoding="UTF-8"?>`,
+        `<?mso-application progid="Excel.Sheet"?>`,
+        `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"`,
+        ` xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"`,
+        ` xmlns:x="urn:schemas-microsoft-com:office:excel"`,
+        ` xmlns:o="urn:schemas-microsoft-com:office:office">`,
+        stylesXml,
+        `<Worksheet ss:Name="${esc(month+'월 계획서')}">`,
+        `<Table>`,
+        `<Column ss:Width="90"/><Column ss:Width="120"/><Column ss:Width="120"/>`,
+        `<Column ss:Width="120"/><Column ss:Width="120"/><Column ss:Width="120"/>`,
+        rows,
+        `</Table></Worksheet></Workbook>`,
+      ].join('');
 
-      const blob = new Blob([fullHtml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
