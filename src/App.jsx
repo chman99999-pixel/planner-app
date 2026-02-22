@@ -261,8 +261,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       rows += buildRow([{ st:'spc', ma:5 }], 8);
       // 범례
       rows += buildRow([
-        {st:'l_ev',v:'전체행사'},{st:'l_fi',v:'고정프로그램'},{st:'l_ex',v:'내외부프로그램'},
-        {st:'l_lu',v:'점심시간'},
+        {st:'l_ev',v:'전체행사',ma:1},{st:'l_fi',v:'고정프로그램',ma:1},{st:'l_ex',v:'내외부프로그램',ma:1},
       ], 28);
       rows += buildRow([{ st:'spc', ma:5 }], 8);
 
@@ -370,10 +369,9 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         <table className="w-full border-collapse mb-4" style={{tableLayout: 'fixed'}}>
           <tbody>
             <tr>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ff6b6b', color: 'white'}}>전체행사</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#74b9ff', color: 'white'}}>고정프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#a29bfe', color: 'white'}}>내외부프로그램</td>
-              <td className="text-center p-3 border-2 border-black font-bold" style={{backgroundColor: '#ffcccc', color: 'black'}}>점심시간</td>
+              <td className="text-center p-3 border-2 border-black font-bold" colSpan={2} style={{backgroundColor: '#ff6b6b', color: 'white'}}>전체행사</td>
+              <td className="text-center p-3 border-2 border-black font-bold" colSpan={2} style={{backgroundColor: '#74b9ff', color: 'white'}}>고정프로그램</td>
+              <td className="text-center p-3 border-2 border-black font-bold" colSpan={2} style={{backgroundColor: '#a29bfe', color: 'white'}}>내외부프로그램</td>
             </tr>
           </tbody>
         </table>
@@ -527,7 +525,7 @@ export default function WeeklyPlannerApp() {
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50">
       <header className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-500 text-white py-6 px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold flex items-center gap-2"><Sparkles className="w-9 h-9" />계획서해방</h1>
+          <h1 className="text-3xl font-bold flex items-center gap-2"><Sparkles className="w-9 h-9" />계획서 해방</h1>
           <p className="text-base mt-2 opacity-90">다음 달 수업 계획서를 AI가 함께 작성해드립니다</p>
           <p className="text-sm mt-1 opacity-70">AI 기획 · 빠른 완성</p>
         </div>
