@@ -50,7 +50,7 @@ export default function AccessGate({ onGranted }) {
         >
           {loading ? '확인 중...' : '입장하기'}
         </button>
-        <p className="text-xs text-gray-400 mt-4">복지인 서류해방 회원만 이용 가능합니다</p>
+        <p className="text-xs text-gray-400 mt-4">복지인 서류해방 구독 회원만 이용 가능합니다.</p>
       </div>
     </div>
   );
