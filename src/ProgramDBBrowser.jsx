@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { PROGRAM_DB } from './data/programs.js';
-import { Search, ChevronDown, ChevronUp, X } from 'lucide-react';
+import { Search, ChevronDown, ChevronUp, X, Sparkles, BookOpen } from 'lucide-react';
 
 const CATEGORIES = [
   { id: 'all', label: '전체', color: 'bg-gray-500' },
@@ -90,7 +90,7 @@ function ProgramCard({ prog, currentMonth }) {
   const recommended = isRecommendedForMonth(prog, currentMonth);
 
   return (
-    <div className="border-2 border-gray-200 rounded-xl overflow-hidden bg-white hover:shadow-md hover:border-gray-300 transition-all">
+    <div className="border border-gray-200 rounded-2xl overflow-hidden bg-white hover:shadow-md transition-all">
       <div className="p-4">
         {/* 뱃지 */}
         <div className="flex items-center gap-1.5 flex-wrap mb-2.5">
@@ -98,12 +98,12 @@ function ProgramCard({ prog, currentMonth }) {
             {prog.category}
           </span>
           {recommended && (
-            <span className="text-sm px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-800 font-bold border border-indigo-300">
+            <span className="text-sm px-2.5 py-0.5 rounded-lg bg-indigo-100 text-indigo-800 font-bold border border-indigo-200">
               {currentMonth}월 추천 ★
             </span>
           )}
           {prog.holiday && (
-            <span className="text-sm px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-700 font-bold border border-rose-300">
+            <span className="text-sm px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-700 font-bold border border-rose-200">
               {prog.holiday}
             </span>
           )}
@@ -126,7 +126,7 @@ function ProgramCard({ prog, currentMonth }) {
           <span className={`text-sm px-2 py-0.5 rounded-lg font-bold ${IN_COLOR[prog.indoor] || 'bg-gray-100 text-gray-700'}`}>
             {prog.indoor}
           </span>
-          <span className="text-sm px-2 py-0.5 rounded-lg bg-gray-200 text-gray-700 font-bold">
+          <span className="text-sm px-2 py-0.5 rounded-lg bg-gray-100 text-gray-700 font-bold">
             {prog.duration}분
           </span>
         </div>
@@ -135,14 +135,14 @@ function ProgramCard({ prog, currentMonth }) {
       {/* 펼치기 */}
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full px-4 py-2.5 bg-gray-100 border-t-2 border-gray-200 text-sm font-bold text-gray-600 flex items-center justify-center gap-1.5 hover:bg-gray-200 transition-colors"
+        className="w-full px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-sm font-bold text-gray-500 flex items-center justify-center gap-1.5 hover:bg-gray-100 transition-colors"
       >
         {expanded ? <><ChevronUp className="w-4 h-4" /> 접기</> : <><ChevronDown className="w-4 h-4" /> 자세히 보기</>}
       </button>
 
       {/* 상세 */}
       {expanded && (
-        <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3 border-t-2 border-gray-200">
+        <div className="px-4 pb-4 pt-3 bg-gray-50 space-y-3 border-t border-gray-100">
           {prog.materials && (
             <div>
               <p className="text-sm font-bold text-gray-800 mb-1">준비물</p>
@@ -184,10 +184,10 @@ function CategoryButtons({ categories, activeCategory, onSelect, counts }) {
           <button
             key={cat.id}
             onClick={() => onSelect(cat.id)}
-            className={`px-3.5 py-2 rounded-lg text-sm font-bold transition-colors ${
+            className={`px-3.5 py-2 rounded-xl text-sm font-bold transition-all ${
               isActive
-                ? 'bg-indigo-700 text-white shadow-sm'
-                : 'bg-white text-gray-700 hover:bg-gray-100 border-2 border-gray-300'
+                ? 'bg-indigo-600 text-white shadow-sm'
+                : 'bg-white text-gray-700 hover:bg-indigo-50 hover:text-indigo-700 border border-gray-200 hover:border-indigo-200'
             }`}
           >
             {cat.label}
@@ -300,13 +300,19 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
   return (
     <div className="space-y-4">
       {/* ===== 추천 프로그램 ===== */}
-      <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+      <div className="bg-white rounded-2xl shadow-md">
         <div className="px-5 pt-5 pb-4">
-          <div className="flex items-center gap-3 mb-2 pb-3 border-b-2 border-gray-100">
-            <div className="w-1.5 h-6 bg-emerald-500 rounded-full"></div>
-            <h2 className="text-lg font-bold text-gray-900">이용자 맞춤 추천</h2>
-            <span className="ml-auto text-sm font-bold text-gray-600 bg-gray-100 px-2.5 py-1 rounded-lg border border-gray-300">
-              인지 {cogLabel}{wheelchair ? ' · 휠체어' : ''} · <span className="text-indigo-700">{recommended.length}개</span>
+          {/* 섹션 헤더 */}
+          <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+            <div className="w-10 h-10 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <Sparkles className="w-5 h-5 text-emerald-600" />
+            </div>
+            <div className="flex-1">
+              <h2 className="text-lg font-bold text-gray-900">이용자 맞춤 추천</h2>
+              <p className="text-sm text-gray-500 mt-0.5">인지 {cogLabel}{wheelchair ? ' · 휠체어' : ''} · {currentMonth}월</p>
+            </div>
+            <span className="text-sm font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-xl">
+              {recommended.length}개
             </span>
           </div>
           <CategoryButtons
@@ -325,7 +331,7 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
             </div>
           ) : (
             <>
-              <p className="text-sm font-bold text-gray-600 mb-3">
+              <p className="text-sm font-bold text-gray-500 mb-3">
                 {recFiltered.length}개{recFiltered.length > recShowCount && ` (${recShowCount}개 표시 중)`}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -336,7 +342,7 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
               {recFiltered.length > recShowCount && (
                 <button
                   onClick={() => setRecShowCount(prev => prev + 10)}
-                  className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-base font-bold hover:bg-gray-200 transition-colors border-2 border-gray-300"
+                  className="w-full mt-4 py-3 bg-gray-50 text-gray-600 rounded-xl text-base font-bold hover:bg-gray-100 transition-colors border border-gray-200"
                 >
                   더보기 ({recFiltered.length - recShowCount}개 남음)
                 </button>
@@ -347,16 +353,19 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
       </div>
 
       {/* ===== 전체 프로그램 DB ===== */}
-      <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm">
+      <div className="bg-white rounded-2xl shadow-md">
         <button
           onClick={() => setShowFullDB(!showFullDB)}
-          className="w-full px-5 py-4 flex items-center justify-between hover:bg-gray-50 rounded-2xl transition-colors"
+          className="w-full px-5 py-4 flex items-center gap-3 hover:bg-gray-50 rounded-2xl transition-colors"
         >
-          <div className="text-left">
+          <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center flex-shrink-0">
+            <BookOpen className="w-5 h-5 text-gray-600" />
+          </div>
+          <div className="text-left flex-1">
             <h2 className="text-lg font-bold text-gray-900">전체 프로그램 DB</h2>
             <p className="text-sm font-medium text-gray-500 mt-0.5">총 {PROGRAM_DB.length}개 · 카테고리별 검색</p>
           </div>
-          <div className="flex items-center gap-2 text-gray-600">
+          <div className="flex items-center gap-2 text-gray-500">
             <span className="text-sm font-bold">{showFullDB ? '접기' : '펼치기'}</span>
             {showFullDB ? <ChevronUp className="w-5 h-5" /> : <ChevronDown className="w-5 h-5" />}
           </div>
@@ -364,26 +373,26 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
 
         {showFullDB && (
           <>
-            <div className="px-5 pb-3 border-t-2 border-gray-200 pt-4">
+            <div className="px-5 pb-3 border-t border-gray-100 pt-4">
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <input
                     type="text"
                     value={searchText}
                     onChange={e => { setSearchText(e.target.value); setFullShowCount(10); }}
                     placeholder="프로그램명 검색..."
-                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-300 rounded-xl text-base font-medium focus:border-indigo-500 focus:outline-none"
+                    className="w-full pl-10 pr-3 py-2.5 border-2 border-gray-200 rounded-xl text-base font-medium focus:border-indigo-500 focus:outline-none"
                   />
                   {searchText && (
                     <button onClick={() => setSearchText('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <X className="w-5 h-5 text-gray-500" />
+                      <X className="w-5 h-5 text-gray-400" />
                     </button>
                   )}
                 </div>
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={`px-4 py-2.5 border-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors ${hasActiveFilter ? 'border-indigo-600 bg-indigo-50 text-indigo-700' : 'border-gray-300 text-gray-700 hover:border-gray-400'}`}
+                  className={`px-4 py-2.5 border-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-colors ${hasActiveFilter ? 'border-indigo-500 bg-indigo-50 text-indigo-700' : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'}`}
                 >
                   {hasActiveFilter ? `필터 ${[filterCog.length > 0, filterWC, !!filterIndoor, filterMonth].filter(Boolean).length}` : '필터'}
                   {showFilters ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
@@ -391,12 +400,12 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
               </div>
 
               {showFilters && (
-                <div className="mt-3 p-4 bg-gray-50 rounded-xl space-y-3 border-2 border-gray-200">
+                <div className="mt-3 p-4 bg-gray-50 rounded-xl space-y-3 border border-gray-200">
                   <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-sm font-bold text-gray-600 w-16">인지레벨</span>
                     {[1, 2, 3].map(lv => (
                       <button key={lv} onClick={() => toggleCog(lv)}
-                        className={`text-sm px-3 py-1.5 rounded-lg border-2 font-bold transition-colors ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-300 text-gray-600 bg-white hover:border-gray-400'}`}>
+                        className={`text-sm px-3 py-1.5 rounded-xl border-2 font-bold transition-colors ${filterCog.includes(lv) ? COG_COLOR[lv] + ' border-current' : 'border-gray-200 text-gray-600 bg-white hover:border-gray-300'}`}>
                         {COG_LABEL[lv]}
                       </button>
                     ))}
@@ -404,22 +413,22 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
                   <div className="flex flex-wrap gap-2 items-center">
                     <span className="text-sm font-bold text-gray-600 w-16">기타</span>
                     <button onClick={() => setFilterWC(!filterWC)}
-                      className={`text-sm px-3 py-1.5 rounded-lg border-2 font-bold transition-colors ${filterWC ? 'bg-indigo-100 text-indigo-800 border-indigo-500' : 'border-gray-300 text-gray-600 bg-white hover:border-gray-400'}`}>
+                      className={`text-sm px-3 py-1.5 rounded-xl border-2 font-bold transition-colors ${filterWC ? 'bg-indigo-100 text-indigo-800 border-indigo-400' : 'border-gray-200 text-gray-600 bg-white hover:border-gray-300'}`}>
                       휠체어 가능
                     </button>
                     {['실내', '실외'].map(v => (
                       <button key={v} onClick={() => setFilterIndoor(filterIndoor === v ? '' : v)}
-                        className={`text-sm px-3 py-1.5 rounded-lg border-2 font-bold transition-colors ${filterIndoor === v ? 'bg-indigo-100 text-indigo-800 border-indigo-500' : 'border-gray-300 text-gray-600 bg-white hover:border-gray-400'}`}>
+                        className={`text-sm px-3 py-1.5 rounded-xl border-2 font-bold transition-colors ${filterIndoor === v ? 'bg-indigo-100 text-indigo-800 border-indigo-400' : 'border-gray-200 text-gray-600 bg-white hover:border-gray-300'}`}>
                         {v}
                       </button>
                     ))}
                     <button onClick={() => setFilterMonth(!filterMonth)}
-                      className={`text-sm px-3 py-1.5 rounded-lg border-2 font-bold transition-colors ${filterMonth ? 'bg-indigo-100 text-indigo-800 border-indigo-500' : 'border-gray-300 text-gray-600 bg-white hover:border-gray-400'}`}>
+                      className={`text-sm px-3 py-1.5 rounded-xl border-2 font-bold transition-colors ${filterMonth ? 'bg-indigo-100 text-indigo-800 border-indigo-400' : 'border-gray-200 text-gray-600 bg-white hover:border-gray-300'}`}>
                       {currentMonth}월 추천
                     </button>
                     {hasActiveFilter && (
                       <button onClick={() => { setFilterCog([]); setFilterWC(false); setFilterIndoor(''); setFilterMonth(false); setSearchText(''); }}
-                        className="text-sm px-3 py-1.5 rounded-lg border-2 border-red-300 text-red-600 bg-white hover:bg-red-50 font-bold transition-colors">
+                        className="text-sm px-3 py-1.5 rounded-xl border-2 border-red-200 text-red-600 bg-white hover:bg-red-50 font-bold transition-colors">
                         초기화
                       </button>
                     )}
@@ -428,7 +437,7 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
               )}
             </div>
 
-            <div className="px-5 py-3 border-b-2 border-gray-200">
+            <div className="px-5 py-3 border-b border-gray-100">
               <CategoryButtons
                 categories={CATEGORIES}
                 activeCategory={activeCategory}
@@ -438,7 +447,7 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
             </div>
 
             <div className="px-4 py-4">
-              <p className="text-sm font-bold text-gray-600 mb-3">
+              <p className="text-sm font-bold text-gray-500 mb-3">
                 {hasActiveFilter || activeCategory !== 'all'
                   ? <><span className="text-indigo-700">{filtered.length}개</span> 검색됨 (전체 {PROGRAM_DB.length}개)</>
                   : <span>프로그램 이름과 내용을 참고하세요</span>
@@ -461,7 +470,7 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
                   {filtered.length > fullShowCount && (
                     <button
                       onClick={() => setFullShowCount(prev => prev + 10)}
-                      className="w-full mt-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-base font-bold hover:bg-gray-200 transition-colors border-2 border-gray-300"
+                      className="w-full mt-4 py-3 bg-gray-50 text-gray-600 rounded-xl text-base font-bold hover:bg-gray-100 transition-colors border border-gray-200"
                     >
                       더보기 ({filtered.length - fullShowCount}개 남음)
                     </button>

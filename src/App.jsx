@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Users, Sparkles, ChevronLeft, ChevronRight, Check, X, Printer, Plus, PartyPopper, CalendarDays, Download } from 'lucide-react';
+import { Calendar, Users, Sparkles, ChevronLeft, ChevronRight, Check, X, Printer, Plus, PartyPopper, CalendarDays, Download, Settings, Star } from 'lucide-react';
 import ProgramDBBrowser from './ProgramDBBrowser.jsx';
 import { PROGRAM_DB } from './data/programs.js';
 
@@ -104,7 +104,7 @@ const MiniCalendar = ({ year, month, selectedDates = [], onDateToggle, onClose }
   const isWkday = (day) => day && isWeekday(new Date(cYear, cMonth, day));
 
   return (
-    <div className="absolute z-50 bg-white rounded-xl shadow-xl p-4 border border-gray-300" style={{ minWidth: '280px' }}>
+    <div className="absolute z-50 bg-white rounded-2xl shadow-xl p-4 border border-gray-200" style={{ minWidth: '280px' }}>
       <div className="flex items-center justify-between mb-3">
         <button onClick={() => cMonth === 0 ? (setCMonth(11), setCYear(cYear - 1)) : setCMonth(cMonth - 1)} className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors">
           <ChevronLeft className="w-5 h-5 text-gray-600" />
@@ -130,14 +130,14 @@ const MiniCalendar = ({ year, month, selectedDates = [], onDateToggle, onClose }
           </button>
         ))}
       </div>
-      <button onClick={onClose} className="mt-3 w-full py-2 bg-indigo-600 text-white rounded-lg text-base font-bold hover:bg-indigo-700 transition-colors">확인</button>
+      <button onClick={onClose} className="mt-3 w-full py-2 bg-indigo-600 text-white rounded-xl text-base font-bold hover:bg-indigo-700 transition-colors shadow-sm">확인</button>
     </div>
   );
 };
 
 const TimeSelect = ({ value, onChange, label }) => (
   <select value={value} onChange={(e) => onChange(e.target.value)}
-    className="px-3 py-2.5 border-2 border-gray-300 rounded-lg text-base text-gray-800 bg-white focus:outline-none focus:border-indigo-500 font-medium">
+    className="px-3 py-2.5 border-2 border-gray-200 rounded-xl text-base text-gray-800 bg-white focus:outline-none focus:border-indigo-500 font-medium">
     <option value="">{label}</option>
     {[9,10,11,12,13,14,15,16,17,18].map(h => <option key={h} value={`${String(h).padStart(2,'0')}:00`}>{h}:00</option>)}
   </select>
@@ -278,13 +278,13 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
       <div className="sticky top-0 bg-white border-b-2 border-gray-300 p-3 print:hidden shadow-sm">
         <div className="flex justify-center gap-3">
-          <button onClick={downloadExcelFile} className="px-5 py-2.5 bg-indigo-700 text-white text-base font-bold rounded-lg flex items-center gap-2 hover:bg-indigo-800 transition-colors">
+          <button onClick={downloadExcelFile} className="px-5 py-2.5 bg-indigo-600 text-white text-base font-bold rounded-xl flex items-center gap-2 hover:bg-indigo-700 transition-colors shadow-sm">
             <Download className="w-5 h-5" /> 엑셀 다운로드
           </button>
-          <button onClick={() => window.print()} className="px-5 py-2.5 bg-slate-700 text-white text-base font-bold rounded-lg flex items-center gap-2 hover:bg-slate-800 transition-colors">
+          <button onClick={() => window.print()} className="px-5 py-2.5 bg-slate-700 text-white text-base font-bold rounded-xl flex items-center gap-2 hover:bg-slate-800 transition-colors shadow-sm">
             <Printer className="w-5 h-5" /> 인쇄
           </button>
-          <button onClick={onClose} className="px-5 py-2.5 bg-white text-gray-700 text-base font-bold rounded-lg border-2 border-gray-400 hover:bg-gray-50 transition-colors">✕ 닫기</button>
+          <button onClick={onClose} className="px-5 py-2.5 bg-white text-gray-700 text-base font-bold rounded-xl border-2 border-gray-300 hover:bg-gray-50 transition-colors">✕ 닫기</button>
         </div>
       </div>
 
@@ -433,33 +433,33 @@ export default function WeeklyPlannerApp() {
   const stepLabels = ['기본 정보', '프로그램 설정', '완성 및 출력'];
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* 헤더 */}
-      <header className="bg-white border-b-2 border-gray-300 shadow-sm">
+    <div className="min-h-screen bg-blue-50">
+      {/* ── 헤더 ── */}
+      <header className="bg-white shadow-sm">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-indigo-700 rounded-xl flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center flex-shrink-0 shadow-md">
+              <Sparkles className="w-7 h-7 text-white" />
             </div>
             <div>
               <h1 className="text-2xl font-bold text-gray-900">계획서해방</h1>
-              <p className="text-sm text-gray-500 mt-0.5 font-medium">주간활동 계획서 자동 작성</p>
+              <p className="text-sm font-semibold text-indigo-500 mt-0.5">주간활동 계획서 자동 작성</p>
             </div>
           </div>
         </div>
       </header>
 
-      {/* 스텝 인디케이터 */}
-      <div className="bg-white border-b-2 border-gray-200">
+      {/* ── 스텝 인디케이터 ── */}
+      <div className="bg-white shadow-sm">
         <div className="max-w-3xl mx-auto px-4 py-4">
           <div className="flex items-center gap-0">
             {[1, 2, 3].map((s, i) => (
               <React.Fragment key={s}>
                 <div className="flex items-center gap-2">
-                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-base font-bold transition-colors border-2 ${step >= s ? 'bg-indigo-700 text-white border-indigo-700' : 'bg-white text-gray-400 border-gray-300'}`}>{s}</div>
-                  <span className={`text-sm font-bold hidden sm:block ${step >= s ? 'text-indigo-700' : 'text-gray-400'}`}>{stepLabels[i]}</span>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center text-base font-bold transition-all border-2 shadow-sm ${step >= s ? 'bg-indigo-600 text-white border-indigo-600' : 'bg-white text-gray-400 border-gray-200'}`}>{s}</div>
+                  <span className={`text-sm font-bold hidden sm:block ${step >= s ? 'text-indigo-600' : 'text-gray-400'}`}>{stepLabels[i]}</span>
                 </div>
-                {s < 3 && <div className={`flex-1 h-0.5 mx-3 ${step > s ? 'bg-indigo-500' : 'bg-gray-300'}`}></div>}
+                {s < 3 && <div className={`flex-1 h-1 mx-3 rounded-full ${step > s ? 'bg-indigo-500' : 'bg-gray-200'}`}></div>}
               </React.Fragment>
             ))}
           </div>
@@ -470,19 +470,23 @@ export default function WeeklyPlannerApp() {
 
         {/* ─── STEP 1 ─── */}
         {step === 1 && (
-          <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-6 space-y-5">
-            <div className="border-b-2 border-gray-100 pb-4">
-              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                <Users className="w-5 h-5 text-indigo-600" /> 기본 정보 설정
-              </h2>
-              <p className="text-sm text-gray-500 mt-1">계획서 작성에 필요한 기본 설정입니다</p>
+          <div className="bg-white rounded-2xl shadow-md p-6 space-y-6">
+            {/* 섹션 헤더 */}
+            <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
+              <div className="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <Users className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">기본 정보 설정</h2>
+                <p className="text-sm text-gray-500 mt-0.5">계획서 작성에 필요한 기본 설정입니다</p>
+              </div>
             </div>
 
             <div className="space-y-5">
               <div>
                 <label className="block text-base font-bold text-gray-800 mb-2">월 선택</label>
                 <select value={userInfo.month} onChange={e => setUserInfo({...userInfo, month: +e.target.value})}
-                  className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-base font-medium text-gray-800 bg-white focus:outline-none focus:border-indigo-500">
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl text-base font-medium text-gray-800 bg-white focus:outline-none focus:border-indigo-500">
                   {MONTHS.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
                 </select>
               </div>
@@ -492,7 +496,7 @@ export default function WeeklyPlannerApp() {
                 <div className="flex gap-3">
                   {['16:00','17:00'].map(t => (
                     <button key={t} onClick={() => setUserInfo({...userInfo, dismissalTime: t})}
-                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-colors ${userInfo.dismissalTime === t ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 text-gray-700 bg-white hover:border-indigo-400'}`}>{t}</button>
+                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-all ${userInfo.dismissalTime === t ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-200 text-gray-700 bg-white hover:border-indigo-300 hover:bg-indigo-50'}`}>{t}</button>
                   ))}
                 </div>
               </div>
@@ -502,7 +506,7 @@ export default function WeeklyPlannerApp() {
                 <div className="flex gap-3">
                   {[false, true].map(v => (
                     <button key={String(v)} onClick={() => setUserInfo({...userInfo, wheelchair: v})}
-                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-colors ${userInfo.wheelchair === v ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 text-gray-700 bg-white hover:border-indigo-400'}`}>{v ? '예' : '아니오'}</button>
+                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-all ${userInfo.wheelchair === v ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-200 text-gray-700 bg-white hover:border-indigo-300 hover:bg-indigo-50'}`}>{v ? '예' : '아니오'}</button>
                   ))}
                 </div>
               </div>
@@ -512,7 +516,7 @@ export default function WeeklyPlannerApp() {
                 <div className="flex gap-3">
                   {['상', '중', '하'].map(level => (
                     <button key={level} onClick={() => setUserInfo({...userInfo, cognitive: level})}
-                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-colors ${userInfo.cognitive === level ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 text-gray-700 bg-white hover:border-indigo-400'}`}>{level}</button>
+                      className={`flex-1 py-3 rounded-xl border-2 text-base font-bold transition-all ${userInfo.cognitive === level ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-200 text-gray-700 bg-white hover:border-indigo-300 hover:bg-indigo-50'}`}>{level}</button>
                   ))}
                 </div>
               </div>
@@ -522,14 +526,14 @@ export default function WeeklyPlannerApp() {
                 <div className="grid grid-cols-2 gap-3">
                   {['유치원', '초등 저학년', '초등 고학년', '중학생'].map(level => (
                     <button key={level} onClick={() => setUserInfo({...userInfo, cognitiveLevel: level})}
-                      className={`py-3 rounded-xl border-2 text-base font-bold transition-colors ${userInfo.cognitiveLevel === level ? 'border-indigo-600 bg-indigo-600 text-white' : 'border-gray-300 text-gray-700 bg-white hover:border-indigo-400'}`}>{level}</button>
+                      className={`py-3 rounded-xl border-2 text-base font-bold transition-all ${userInfo.cognitiveLevel === level ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : 'border-gray-200 text-gray-700 bg-white hover:border-indigo-300 hover:bg-indigo-50'}`}>{level}</button>
                   ))}
                 </div>
               </div>
             </div>
 
             <button onClick={() => setStep(2)}
-              className="w-full py-4 bg-indigo-700 text-white rounded-xl font-bold text-lg hover:bg-indigo-800 transition-colors mt-2">
+              className="w-full py-4 bg-indigo-600 text-white rounded-xl font-bold text-lg hover:bg-indigo-700 transition-all shadow-md hover:shadow-lg mt-2">
               다음 단계 →
             </button>
           </div>
@@ -539,14 +543,16 @@ export default function WeeklyPlannerApp() {
         {step === 2 && (
           <div className="space-y-4">
             {/* 전체 행사 */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-gray-100">
-                <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
+            <div className="bg-white rounded-2xl shadow-md p-5">
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <CalendarDays className="w-5 h-5 text-rose-600" />
+                </div>
                 <h2 className="text-lg font-bold text-gray-900">전체 행사</h2>
               </div>
               <div className="relative">
                 <button onClick={() => setShowEventCal(!showEventCal)}
-                  className="px-4 py-2.5 bg-gray-100 text-gray-800 rounded-lg text-base font-bold flex items-center gap-2 hover:bg-gray-200 transition-colors border-2 border-gray-300">
+                  className="px-4 py-2.5 bg-rose-50 text-rose-700 rounded-xl text-base font-bold flex items-center gap-2 hover:bg-rose-100 transition-colors border-2 border-rose-200">
                   <Plus className="w-5 h-5" /> 행사 추가
                 </button>
                 {showEventCal && (
@@ -558,10 +564,10 @@ export default function WeeklyPlannerApp() {
               {events.length > 0 && (
                 <div className="mt-3 space-y-2">
                   {events.map((ev, i) => (
-                    <div key={i} className="bg-gray-50 rounded-xl p-3 flex items-center gap-2 border-2 border-gray-200">
-                      <span className="text-sm font-bold text-gray-700 whitespace-nowrap w-20">{formatDate(new Date(ev.date))}</span>
+                    <div key={i} className="bg-rose-50 rounded-xl p-3 flex items-center gap-2 border border-rose-200">
+                      <span className="text-sm font-bold text-rose-700 whitespace-nowrap w-20">{formatDate(new Date(ev.date))}</span>
                       <input value={ev.name} onChange={e => { const n = [...events]; n[i].name = e.target.value; setEvents(n); }}
-                        placeholder="행사명" className="flex-1 px-3 py-2 border-2 border-gray-300 rounded-lg text-base font-medium focus:outline-none focus:border-indigo-500" />
+                        placeholder="행사명" className="flex-1 px-3 py-2 border-2 border-gray-200 rounded-xl text-base font-medium focus:outline-none focus:border-indigo-500 bg-white" />
                       <TimeSelect value={ev.startTime} onChange={v => { const n = [...events]; n[i].startTime = v; setEvents(n); }} label="시작" />
                       <TimeSelect value={ev.endTime} onChange={v => { const n = [...events]; n[i].endTime = v; setEvents(n); }} label="종료" />
                       <button onClick={() => setEvents(events.filter((_, j) => j !== i))} className="text-gray-400 hover:text-red-500 transition-colors"><X className="w-5 h-5" /></button>
@@ -572,9 +578,11 @@ export default function WeeklyPlannerApp() {
             </div>
 
             {/* 고정 프로그램 */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-4 pb-3 border-b-2 border-gray-100">
-                <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+            <div className="bg-white rounded-2xl shadow-md p-5">
+              <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Check className="w-5 h-5 text-blue-600" />
+                </div>
                 <h2 className="text-lg font-bold text-gray-900">고정 프로그램</h2>
               </div>
               <div className="space-y-2">
@@ -588,18 +596,20 @@ export default function WeeklyPlannerApp() {
             </div>
 
             {/* 내외부 프로그램 */}
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-1 pb-3 border-b-2 border-gray-100">
-                <div className="w-1.5 h-6 bg-violet-600 rounded-full"></div>
+            <div className="bg-white rounded-2xl shadow-md p-5">
+              <div className="flex items-center gap-3 mb-1 pb-4 border-b border-gray-100">
+                <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Star className="w-5 h-5 text-violet-600" />
+                </div>
                 <h2 className="text-lg font-bold text-gray-900">내외부 프로그램</h2>
-                <span className="ml-auto text-sm font-bold text-gray-500">최대 5개 ({selectedExt.length}/5)</span>
+                <span className="ml-auto text-sm font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">최대 5개 ({selectedExt.length}/5)</span>
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-3 mb-4">
                 {EXTERNAL_PROGRAMS.map((prog, idx) => {
                   const sel = selectedExt.includes(idx), dis = !sel && selectedExt.length >= 5;
                   return (
                     <button key={idx} onClick={() => !dis && toggleExt(idx)} disabled={dis}
-                      className={`p-3 rounded-xl border-2 text-left text-sm font-semibold transition-colors ${sel ? 'border-indigo-600 bg-indigo-600 text-white' : dis ? 'border-gray-200 bg-gray-50 text-gray-300 cursor-not-allowed' : 'border-gray-300 bg-white hover:border-indigo-400 text-gray-800'}`}>
+                      className={`p-3 rounded-xl border-2 text-left text-sm font-semibold transition-all ${sel ? 'border-indigo-600 bg-indigo-600 text-white shadow-sm' : dis ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed' : 'border-gray-200 bg-white hover:border-indigo-300 hover:bg-indigo-50 text-gray-800'}`}>
                       <span>{prog.icon} {prog.name}</span>
                       <span className={`ml-1 font-bold ${sel ? 'text-indigo-200' : prog.type === '협' ? 'text-red-500' : 'text-gray-400'}`}>({prog.type})</span>
                     </button>
@@ -607,7 +617,7 @@ export default function WeeklyPlannerApp() {
                 })}
               </div>
               {selectedExt.length > 0 && (
-                <div className="space-y-2 border-t-2 border-gray-200 pt-4">
+                <div className="space-y-2 border-t border-gray-100 pt-4">
                   {selectedExt.map(idx => (
                     <ExtItem key={idx} idx={idx} prog={EXTERNAL_PROGRAMS[idx]} schedule={extSchedules[idx] || {}} month={userInfo.month}
                       onDateToggle={d => toggleExtDate(idx, d)}
@@ -618,8 +628,8 @@ export default function WeeklyPlannerApp() {
             </div>
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(1)} className="flex-1 py-4 bg-white text-gray-700 rounded-xl font-bold text-base border-2 border-gray-300 hover:bg-gray-50 transition-colors">← 이전</button>
-              <button onClick={() => setStep(3)} className="flex-1 py-4 bg-indigo-700 text-white rounded-xl font-bold text-base hover:bg-indigo-800 transition-colors">다음 →</button>
+              <button onClick={() => setStep(1)} className="flex-1 py-4 bg-white text-gray-700 rounded-xl font-bold text-base border-2 border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">← 이전</button>
+              <button onClick={() => setStep(3)} className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 transition-all shadow-md">다음 →</button>
             </div>
           </div>
         )}
@@ -628,14 +638,16 @@ export default function WeeklyPlannerApp() {
         {step === 3 && (
           <div className="space-y-4">
             {events.filter(e => e.name).length > 0 && (
-              <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-                <div className="flex items-center gap-3 mb-3 pb-3 border-b-2 border-gray-100">
-                  <div className="w-1.5 h-6 bg-red-500 rounded-full"></div>
+              <div className="bg-white rounded-2xl shadow-md p-5">
+                <div className="flex items-center gap-3 mb-3 pb-4 border-b border-gray-100">
+                  <div className="w-10 h-10 bg-rose-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <CalendarDays className="w-5 h-5 text-rose-600" />
+                  </div>
                   <h2 className="text-lg font-bold text-gray-900">전체 행사</h2>
                 </div>
                 <div className="space-y-2">
                   {events.filter(e => e.name).map((ev, i) => (
-                    <div key={i} className="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-200">
+                    <div key={i} className="bg-rose-50 rounded-xl p-4 flex items-center gap-3 border border-rose-200">
                       <span className="text-2xl">🎉</span>
                       <div>
                         <p className="font-bold text-base text-gray-900">{ev.name}</p>
@@ -647,14 +659,16 @@ export default function WeeklyPlannerApp() {
               </div>
             )}
 
-            <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-              <div className="flex items-center gap-3 mb-3 pb-3 border-b-2 border-gray-100">
-                <div className="w-1.5 h-6 bg-blue-600 rounded-full"></div>
+            <div className="bg-white rounded-2xl shadow-md p-5">
+              <div className="flex items-center gap-3 mb-3 pb-4 border-b border-gray-100">
+                <div className="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Check className="w-5 h-5 text-blue-600" />
+                </div>
                 <h2 className="text-lg font-bold text-gray-900">고정 프로그램</h2>
               </div>
               <div className="space-y-2">
                 {Object.entries(fixedPrograms).filter(([_, p]) => p.enabled && p.dates?.length > 0).map(([key, prog]) => (
-                  <div key={key} className="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-200">
+                  <div key={key} className="bg-blue-50 rounded-xl p-4 flex items-center gap-3 border border-blue-200">
                     <span className="text-2xl">{FIXED_INFO[key]?.icon}</span>
                     <div>
                       <p className="font-bold text-base text-gray-900">{key === 'monthIntro' ? `${userInfo.month}${FIXED_INFO[key]?.name}` : FIXED_INFO[key]?.name}</p>
@@ -669,9 +683,11 @@ export default function WeeklyPlannerApp() {
             </div>
 
             {selectedExt.length > 0 && (
-              <div className="bg-white rounded-2xl border-2 border-gray-200 shadow-sm p-5">
-                <div className="flex items-center gap-3 mb-3 pb-3 border-b-2 border-gray-100">
-                  <div className="w-1.5 h-6 bg-violet-600 rounded-full"></div>
+              <div className="bg-white rounded-2xl shadow-md p-5">
+                <div className="flex items-center gap-3 mb-3 pb-4 border-b border-gray-100">
+                  <div className="w-10 h-10 bg-violet-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Star className="w-5 h-5 text-violet-600" />
+                  </div>
                   <h2 className="text-lg font-bold text-gray-900">내외부 프로그램</h2>
                 </div>
                 <div className="space-y-2">
@@ -679,7 +695,7 @@ export default function WeeklyPlannerApp() {
                     const prog = EXTERNAL_PROGRAMS[idx];
                     const schedule = extSchedules[idx] || {};
                     return (
-                      <div key={idx} className="bg-gray-50 rounded-xl p-4 flex items-center gap-3 border-2 border-gray-200">
+                      <div key={idx} className="bg-violet-50 rounded-xl p-4 flex items-center gap-3 border border-violet-200">
                         <span className="text-2xl">{prog.icon}</span>
                         <div>
                           <p className="font-bold text-base text-gray-900">
@@ -699,7 +715,7 @@ export default function WeeklyPlannerApp() {
             )}
 
             <button onClick={() => setShowPreview(true)}
-              className="w-full py-4 bg-white text-indigo-700 rounded-xl font-bold text-base border-2 border-indigo-500 hover:bg-indigo-50 transition-colors flex items-center justify-center gap-2">
+              className="w-full py-4 bg-white text-indigo-700 rounded-xl font-bold text-base border-2 border-indigo-400 hover:bg-indigo-50 transition-all shadow-sm flex items-center justify-center gap-2">
               <CalendarDays className="w-5 h-5" /> {userInfo.month}월 계획서 미리보기
             </button>
 
@@ -710,9 +726,9 @@ export default function WeeklyPlannerApp() {
             />
 
             <div className="flex gap-3">
-              <button onClick={() => setStep(2)} className="flex-1 py-4 bg-white text-gray-700 rounded-xl font-bold text-base border-2 border-gray-300 hover:bg-gray-50 transition-colors">← 이전</button>
+              <button onClick={() => setStep(2)} className="flex-1 py-4 bg-white text-gray-700 rounded-xl font-bold text-base border-2 border-gray-200 hover:bg-gray-50 transition-colors shadow-sm">← 이전</button>
               <button onClick={() => setShowFinalPlan(true)}
-                className="flex-1 py-4 bg-indigo-700 text-white rounded-xl font-bold text-base hover:bg-indigo-800 transition-colors flex items-center justify-center gap-2">
+                className="flex-1 py-4 bg-indigo-600 text-white rounded-xl font-bold text-base hover:bg-indigo-700 transition-all shadow-md flex items-center justify-center gap-2">
                 <Printer className="w-5 h-5" /> {userInfo.month}월 계획서 만들기
               </button>
             </div>
@@ -729,10 +745,10 @@ export default function WeeklyPlannerApp() {
 function FixedItem({ pKey, prog, info, month, dismissalTime, onToggle, onDateToggle, onTimeChange }) {
   const [showCal, setShowCal] = useState(false);
   return (
-    <div className={`rounded-xl border-2 transition-colors ${prog.enabled ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50'}`}>
+    <div className={`rounded-xl border-2 transition-all ${prog.enabled ? 'border-blue-100 bg-blue-50' : 'border-gray-100 bg-gray-50'}`}>
       <div className="flex items-start gap-3 p-3.5">
         <button onClick={onToggle}
-          className={`w-6 h-6 rounded border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${prog.enabled ? 'bg-indigo-600 border-indigo-600' : 'border-gray-400 bg-white'}`}>
+          className={`w-6 h-6 rounded-lg border-2 flex items-center justify-center flex-shrink-0 mt-0.5 transition-colors ${prog.enabled ? 'bg-indigo-600 border-indigo-600' : 'border-gray-300 bg-white'}`}>
           {prog.enabled && <Check className="w-4 h-4 text-white" strokeWidth={3} />}
         </button>
         <div className="flex-1 min-w-0">
@@ -747,14 +763,14 @@ function FixedItem({ pKey, prog, info, month, dismissalTime, onToggle, onDateTog
             <div className="mt-3 space-y-2.5">
               <div className="relative">
                 <button onClick={() => setShowCal(!showCal)}
-                  className="px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-200 transition-colors border-2 border-gray-300">
+                  className="px-3 py-2 bg-white text-gray-700 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-blue-100 transition-colors border-2 border-blue-200">
                   <Calendar className="w-4 h-4" /> 날짜 선택 {prog.dates?.length > 0 && `(${prog.dates.length})`}
                 </button>
                 {showCal && <MiniCalendar year={2026} month={month} selectedDates={prog.dates || []} onDateToggle={onDateToggle} onClose={() => setShowCal(false)} />}
               </div>
               {prog.dates?.length > 0 && (
                 <div className="flex flex-wrap gap-1.5">
-                  {prog.dates.map(d => <span key={d} className="px-2.5 py-1 bg-indigo-100 rounded-lg text-sm text-indigo-800 font-bold border border-indigo-300">{formatDate(new Date(d))}</span>)}
+                  {prog.dates.map(d => <span key={d} className="px-2.5 py-1 bg-indigo-100 rounded-lg text-sm text-indigo-800 font-bold border border-indigo-200">{formatDate(new Date(d))}</span>)}
                 </div>
               )}
               <div className="flex items-center gap-2">
@@ -773,7 +789,7 @@ function FixedItem({ pKey, prog, info, month, dismissalTime, onToggle, onDateTog
 function ExtItem({ idx, prog, schedule, month, onDateToggle, onTimeChange }) {
   const [showCal, setShowCal] = useState(false);
   return (
-    <div className="bg-gray-50 rounded-xl border-2 border-gray-200 p-3.5">
+    <div className="bg-violet-50 rounded-xl border border-violet-200 p-3.5">
       <div className="flex items-center gap-2 mb-3">
         <span className="text-lg">{prog.icon}</span>
         <span className="text-base font-bold text-gray-900">{prog.name}</span>
@@ -782,14 +798,14 @@ function ExtItem({ idx, prog, schedule, month, onDateToggle, onTimeChange }) {
       <div className="space-y-2.5">
         <div className="relative">
           <button onClick={() => setShowCal(!showCal)}
-            className="px-3 py-2 bg-white text-gray-700 rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-gray-100 transition-colors border-2 border-gray-300">
+            className="px-3 py-2 bg-white text-gray-700 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-violet-100 transition-colors border-2 border-violet-200">
             <Calendar className="w-4 h-4" /> 날짜 선택 {schedule.dates?.length > 0 && `(${schedule.dates.length})`}
           </button>
           {showCal && <MiniCalendar year={2026} month={month} selectedDates={schedule.dates || []} onDateToggle={onDateToggle} onClose={() => setShowCal(false)} />}
         </div>
         {schedule.dates?.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
-            {schedule.dates.map(d => <span key={d} className="px-2.5 py-1 bg-indigo-100 rounded-lg text-sm text-indigo-800 font-bold border border-indigo-300">{formatDate(new Date(d))}</span>)}
+            {schedule.dates.map(d => <span key={d} className="px-2.5 py-1 bg-indigo-100 rounded-lg text-sm text-indigo-800 font-bold border border-indigo-200">{formatDate(new Date(d))}</span>)}
           </div>
         )}
         <div className="flex items-center gap-2">
