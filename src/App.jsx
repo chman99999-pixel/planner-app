@@ -330,93 +330,16 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
         `</Table></Worksheet></Workbook>`,
       ].join('');
 
-      const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
+      const blob = new Blob(['\uFEFF' + xml], { type: 'application/xml;charset=utf-8' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${year}년_${month}월_주간활동계획서.xls`;
+      a.download = `${year}년_${month}월_주간활동계획서.xml`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch (e) {
       alert('엑셀 파일 생성에 실패했습니다: ' + e.message);
     }
-  };
-
-  const [showCopyModal, setShowCopyModal] = useState(false);
-  const [htmlCode, setHtmlCode] = useState('');
-
-  const generateHtmlCode = () => {
-    let html = `<table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;border:3px solid black;">`;
-    html += `<tr><td colspan="6" style="background:#6366F1;color:white;font-size:18px;font-weight:bold;text-align:center;padding:12px;border:1px solid black;">📋 ${year}년 ${month}월 ${title}</td></tr>`;
-    html += `<tr><td colspan="6" style="text-align:center;padding:8px;color:#666;font-size:14px;border:1px solid black;">성인 발달장애인 주간활동센터</td></tr>`;
-    html += `<tr><td style="background:#ff6b6b;color:white;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">전체행사</td>`;
-    html += `<td style="background:#74b9ff;color:white;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">고정프로그램</td>`;
-    html += `<td style="background:#a29bfe;color:white;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">내외부프로그램</td>`;
-    html += `<td style="background:#55efc4;color:black;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">참여형프로그램</td>`;
-    html += `<td style="background:#fdcb6e;color:black;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">창의형프로그램</td>`;
-    html += `<td style="background:#ffcccc;color:black;text-align:center;padding:8px;border:1px solid black;font-weight:bold;">점심시간</td></tr>`;
-    html += `<tr><td colspan="6" style="padding:5px;border:none;"></td></tr>`;
-
-    weeks.forEach((wk, wi) => {
-      const wd = getWeekDates(wk);
-      html += `<tr><td colspan="6" style="background:#E5E7EB;font-weight:bold;font-size:14px;padding:10px;border:1px solid black;border-top:3px solid black;">📌 ${wi + 1}주차</td></tr>`;
-      html += `<tr><td rowspan="2" style="background:#F3F4F6;font-weight:bold;text-align:center;padding:8px;border:1px solid black;vertical-align:middle;">시간</td>`;
-      ['월','화','수','목','금'].forEach((d,i) => {
-        const isH = wd[i]?.isHoliday;
-        const isLast = i === 4;
-        html += `<td style="background:#F3F4F6;font-weight:bold;text-align:center;padding:8px;border:1px solid black;${isLast?'border-right:3px solid black;':''}${isH?'color:#DC2626;':''}">${d}요일</td>`;
-      });
-      html += `</tr>`;
-      html += `<tr>`;
-      wd.forEach((info, i) => {
-        const isLast = i === 4;
-        if (info) {
-          html += `<td style="background:#F3F4F6;font-weight:bold;text-align:center;padding:8px;border:1px solid black;${isLast?'border-right:3px solid black;':''}${info.isHoliday?'color:#DC2626;':''}">${info.day}일${info.holidayName ? '<br>('+info.holidayName+')' : ''}</td>`;
-        } else {
-          html += `<td style="background:#F3F4F6;border:1px solid black;${isLast?'border-right:3px solid black;':''}"></td>`;
-        }
-      });
-      html += `</tr>`;
-
-      timeSlots.forEach((slot, slotIdx) => {
-        const isLastRow = slotIdx === timeSlots.length - 1;
-        html += `<tr><td style="background:#F9FAFB;text-align:center;padding:6px;border:1px solid black;font-size:12px;${isLastRow?'border-bottom:3px solid black;':''}">${slot}</td>`;
-        wd.forEach((info, i) => {
-          const isLastCol = i === 4;
-          const borderRight = isLastCol ? 'border-right:3px solid black;' : '';
-          const borderBottom = isLastRow ? 'border-bottom:3px solid black;' : '';
-          if (!info) {
-            html += `<td style="background:#F3F4F6;border:1px solid black;${borderRight}${borderBottom}"></td>`;
-          } else if (info.isHoliday) {
-            if (slotIdx === 0) {
-              html += `<td rowspan="${timeSlots.length}" style="background:#FEE2E2;color:#DC2626;text-align:center;padding:8px;border:1px solid black;font-weight:bold;font-size:14px;vertical-align:middle;${borderRight}border-bottom:3px solid black;">${info.holidayName || '휴일'}</td>`;
-            }
-          } else if (slot === '12:00~13:00') {
-            html += `<td style="background:#FFCCCC;text-align:center;padding:6px;border:1px solid black;${borderRight}${borderBottom}">점심식사 및 위생지원</td>`;
-          } else {
-            const scheds = getAtTime(info.dateStr, slot);
-            if (scheds.length > 0) {
-              const s = scheds[0];
-              let bg = '#74b9ff', tc = 'white';
-              if (s.type === 'event') bg = '#ff6b6b';
-              else if (s.type === 'external') bg = '#a29bfe';
-              else if (s.type === 'participatory') { bg = '#55efc4'; tc = 'black'; }
-              else if (s.type === 'creative') { bg = '#fdcb6e'; tc = 'black'; }
-              const dn = s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name;
-              html += `<td style="background:${bg};color:${tc};text-align:center;padding:6px;border:1px solid black;font-weight:bold;${borderRight}${borderBottom}">${dn}</td>`;
-            } else {
-              html += `<td style="border:1px solid black;${borderRight}${borderBottom}"></td>`;
-            }
-          }
-        });
-        html += `</tr>`;
-      });
-      html += `<tr><td colspan="6" style="padding:8px;border:none;"></td></tr>`;
-    });
-
-    html += `</table>`;
-    setHtmlCode(html);
-    setShowCopyModal(true);
   };
 
   const handlePrint = () => {
@@ -427,9 +350,6 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
     <div className="fixed inset-0 bg-white z-50 overflow-y-auto">
       <div className="sticky top-0 bg-white border-b-2 border-black p-3 print:hidden">
         <div className="flex justify-center gap-3">
-          <button onClick={generateHtmlCode} className="px-4 py-2 bg-green-600 text-white font-bold rounded flex items-center gap-2">
-            <Download className="w-4 h-4" /> 엑셀용 복사
-          </button>
           <button onClick={downloadExcelFile} className="px-4 py-2 bg-purple-600 text-white font-bold rounded flex items-center gap-2">
             <Download className="w-4 h-4" /> 엑셀파일 만들기
           </button>
@@ -439,30 +359,6 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
           <button onClick={onClose} className="px-4 py-2 bg-gray-700 text-white font-bold rounded">✕ 닫기</button>
         </div>
       </div>
-
-      {showCopyModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60] print:hidden">
-          <div className="bg-white rounded-lg p-5 max-w-2xl w-full mx-4 flex flex-col" style={{maxHeight: '500px'}}>
-            <h3 className="text-xl font-bold mb-2">📋 엑셀용 HTML 코드</h3>
-            <div className="bg-yellow-100 border-2 border-yellow-500 rounded p-2 mb-3">
-              <p className="text-sm font-bold text-yellow-800">
-                📌 아래 박스를 클릭하면 자동 전체선택 → <strong>Ctrl+C</strong> 복사 → 엑셀에서 <strong>Ctrl+V</strong> 붙여넣기
-              </p>
-            </div>
-            <textarea
-              readOnly
-              value={htmlCode}
-              className="flex-1 w-full p-3 border-2 border-blue-500 rounded font-mono text-xs bg-gray-50 resize-none"
-              style={{minHeight: '250px'}}
-              onFocus={(e) => e.target.select()}
-              onClick={(e) => e.target.select()}
-            />
-            <div className="flex justify-end mt-3">
-              <button onClick={() => setShowCopyModal(false)} className="px-6 py-2 bg-gray-600 text-white font-bold rounded">닫기</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div id="schedule-table-area" className="p-4 max-w-5xl mx-auto">
         <table className="w-full border-collapse mb-4" style={{tableLayout: 'fixed'}}>
@@ -550,7 +446,16 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
           );
         })}
       </div>
-      <style>{`@media print{.print\\:hidden{display:none!important}body{-webkit-print-color-adjust:exact;print-color-adjust:exact}}`}</style>
+      <style>{`
+        @media print {
+          .print\\:hidden { display: none !important; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; overflow: visible !important; }
+          html { overflow: visible !important; }
+          .fixed { position: static !important; }
+          * { overflow: visible !important; }
+          #schedule-table-area { display: block !important; height: auto !important; }
+        }
+      `}</style>
     </div>
   );
 };
