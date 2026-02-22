@@ -222,21 +222,14 @@ export default function ProgramDBBrowser({ currentMonth, wheelchair, cognitiveIn
   // 인지능력 매핑
   const cogLevel = cognitiveInfo?.cognitive === '상' ? 3 : cognitiveInfo?.cognitive === '중' ? 2 : 1;
 
-  // 추천 프로그램
+  // 추천 프로그램 (현재 월에 해당하는 프로그램만)
   const recommended = useMemo(() => {
-    const list = PROGRAM_DB.filter(p => {
+    return PROGRAM_DB.filter(p => {
       if (!p.cognitiveLevel.includes(cogLevel)) return false;
       if (wheelchair && p.wheelchair === 'X') return false;
+      if (!isRecommendedForMonth(p, currentMonth)) return false;
       return true;
     });
-    list.sort((a, b) => {
-      const aMonth = isRecommendedForMonth(a, currentMonth);
-      const bMonth = isRecommendedForMonth(b, currentMonth);
-      if (aMonth && !bMonth) return -1;
-      if (!aMonth && bMonth) return 1;
-      return 0;
-    });
-    return list;
   }, [cogLevel, wheelchair, currentMonth]);
 
   // 추천 중 카테고리 필터
