@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Users, Sparkles, ChevronLeft, ChevronRight, Check, X, Printer, Plus, PartyPopper, CalendarDays, Download } from 'lucide-react';
 import ProgramDBBrowser from './ProgramDBBrowser.jsx';
 import { PROGRAM_DB } from './data/programs.js';
+import XLSX from 'xlsx-js-style';
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토'];
 const MONTHS = ['1월', '2월', '3월', '4월', '5월', '6월', '7월', '8월', '9월', '10월', '11월', '12월'];
@@ -205,159 +206,174 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
 
   const downloadExcelFile = () => {
     try {
-      // XML 특수문자 이스케이프
-      const esc = (s) => String(s ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      const wb = XLSX.utils.book_new();
+      const ws = {};
+      const merges = [];
+      const rowHeights = [];
+      let R = 0;
+      const cov = {}; // 수직 병합 커버리지 추적
 
-      // 스타일 정의 헬퍼
-      const mkBorders = (l=1,t=1,r=1,b=1) =>
-        `<Borders><Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="${b}"/><Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="${l}"/><Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="${r}"/><Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="${t}"/></Borders>`;
-      const mkStyle = (id, bg, fg, b, sz, ha='Center', bdr=mkBorders()) =>
-        `<Style ss:ID="${id}"><Interior ss:Color="${bg}" ss:Pattern="Solid"/><Font ss:Color="${fg}" ss:Bold="${b?1:0}" ss:Size="${sz}" ss:FontName="맑은 고딕"/><Alignment ss:Horizontal="${ha}" ss:Vertical="Center" ss:WrapText="1"/>${bdr}</Style>`;
-      // 바깥 테두리용 엣지 변형 스타일 생성 (_R, _B, _RB)
+      // 테두리 헬퍼 (weight: 1=thin, 2=medium)
+      const bd = (w) => ({ style: w >= 2 ? 'medium' : 'thin', color: { rgb: '000000' } });
+      const mkBorder = (l=1,t=1,r=1,b=1) => ({ left:bd(l), top:bd(t), right:bd(r), bottom:bd(b) });
       const OB = 2;
-      const mkEdge = (id, bg, fg, b, sz, ha='Center') => [
-        mkStyle(id+'_R', bg,fg,b,sz,ha, mkBorders(1,1,OB,1)),
-        mkStyle(id+'_B', bg,fg,b,sz,ha, mkBorders(1,1,1,OB)),
-        mkStyle(id+'_RB',bg,fg,b,sz,ha, mkBorders(1,1,OB,OB)),
-      ].join('');
 
-      const stylesXml = `<Styles>
-        ${mkStyle('hdr','#6366F1','#FFFFFF',1,15,'Center',mkBorders(OB,OB,OB,1))}
-        ${mkStyle('sub','#FFFFFF','#666666',0,11,'Center',mkBorders(OB,1,OB,OB))}
-        ${mkStyle('spc','#FFFFFF','#FFFFFF',0,4)}
-        ${mkStyle('l_ev','#FF6B6B','#FFFFFF',1,11)} ${mkStyle('l_fi','#74B9FF','#FFFFFF',1,11)}
-        ${mkStyle('l_ex','#A29BFE','#FFFFFF',1,11)} ${mkStyle('l_lu','#FFCCCC','#000000',1,11)}
-        ${mkStyle('l_ev_b','#FF6B6B','#FFFFFF',1,11,'Center',mkBorders(OB,OB,1,OB))}
-        ${mkStyle('l_fi_b','#74B9FF','#FFFFFF',1,11,'Center',mkBorders(1,OB,1,OB))}
-        ${mkStyle('l_ex_b','#A29BFE','#FFFFFF',1,11,'Center',mkBorders(1,OB,OB,OB))}
-        ${mkStyle('w_hd','#E5E7EB','#000000',1,12,'Left',mkBorders(OB,OB,OB,1))}
-        ${mkStyle('c_hd','#F3F4F6','#000000',1,11)} ${mkStyle('c_ho','#F3F4F6','#DC2626',1,11)}
-        ${mkStyle('c_hd_L','#F3F4F6','#000000',1,11,'Center',mkBorders(OB,1,1,1))}
-        ${mkStyle('c_hd_R','#F3F4F6','#000000',1,11,'Center',mkBorders(1,1,OB,1))}
-        ${mkStyle('c_ho_R','#F3F4F6','#DC2626',1,11,'Center',mkBorders(1,1,OB,1))}
-        ${mkStyle('t_ce','#F9FAFB','#000000',0,10)} ${mkStyle('g_ce','#F3F4F6','#000000',0,10)}
-        ${mkStyle('t_ce_L', '#F9FAFB','#000000',0,10,'Center',mkBorders(OB,1,1,1))}
-        ${mkStyle('t_ce_LB','#F9FAFB','#000000',0,10,'Center',mkBorders(OB,1,1,OB))}
-        ${mkStyle('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkStyle('fi_c','#74B9FF','#FFFFFF',1,10)}
-        ${mkStyle('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkStyle('lu_c','#FFCCCC','#000000',0,10)}
-        ${mkStyle('ho_c','#FEE2E2','#DC2626',1,12)} ${mkStyle('em_c','#FFFFFF','#000000',0,10)}
-        ${mkEdge('ev_c','#FF6B6B','#FFFFFF',1,10)} ${mkEdge('fi_c','#74B9FF','#FFFFFF',1,10)}
-        ${mkEdge('ex_c','#A29BFE','#FFFFFF',1,10)} ${mkEdge('lu_c','#FFCCCC','#000000',0,10)}
-        ${mkEdge('ho_c','#FEE2E2','#DC2626',1,12)} ${mkEdge('em_c','#FFFFFF','#000000',0,10)}
-        ${mkEdge('g_ce','#F3F4F6','#000000',0,10)}
-      </Styles>`;
+      // 스타일 생성 헬퍼
+      const mkS = (bg, fg, bold, sz, ha='center', border=mkBorder()) => ({
+        fill: { patternType: 'solid', fgColor: { rgb: bg } },
+        font: { name: '맑은 고딕', sz, bold: !!bold, color: { rgb: fg } },
+        alignment: { horizontal: ha, vertical: 'center', wrapText: true },
+        border,
+      });
 
-      // 열 커버리지 추적 (병합 셀 rowspan 처리)
-      const cov = {};
-      const buildRow = (specs, h) => {
-        let xml = h ? `<Row ss:Height="${h}">` : '<Row>';
-        let col = 1;
+      // 엣지 변형 스타일 (_R, _B, _RB suffix)
+      const edge = (base, suf) => {
+        const s = { ...base, border: { ...base.border } };
+        if (suf.includes('R')) s.border.right = bd(OB);
+        if (suf.includes('B')) s.border.bottom = bd(OB);
+        return s;
+      };
+
+      // 스타일 맵
+      const S = {
+        hdr:    mkS('6366F1','FFFFFF',true, 15,'center', mkBorder(OB,OB,OB,1)),
+        sub:    mkS('FFFFFF','666666',false,11,'center', mkBorder(OB,1,OB,OB)),
+        spc:    mkS('FFFFFF','FFFFFF',false, 4,'center'),
+        // 범례
+        l_ev:   mkS('FF6B6B','FFFFFF',true, 11,'center', mkBorder(OB,OB,1,OB)),
+        l_fi:   mkS('74B9FF','FFFFFF',true, 11,'center', mkBorder(1,OB,1,OB)),
+        l_ex:   mkS('A29BFE','FFFFFF',true, 11,'center', mkBorder(1,OB,OB,OB)),
+        // 주차 헤더
+        w_hd:   mkS('E5E7EB','000000',true, 12,'left',  mkBorder(OB,OB,OB,1)),
+        // 요일/날짜 헤더
+        c_hd:   mkS('F3F4F6','000000',true, 11,'center'),
+        c_ho:   mkS('F3F4F6','DC2626',true, 11,'center'),
+        c_hd_L: mkS('F3F4F6','000000',true, 11,'center', mkBorder(OB,1,1,1)),
+        c_hd_R: mkS('F3F4F6','000000',true, 11,'center', mkBorder(1,1,OB,1)),
+        c_ho_R: mkS('F3F4F6','DC2626',true, 11,'center', mkBorder(1,1,OB,1)),
+        // 시간 셀
+        t_ce_L: mkS('F9FAFB','000000',false,10,'center', mkBorder(OB,1,1,1)),
+        t_ce_LB:mkS('F9FAFB','000000',false,10,'center', mkBorder(OB,1,1,OB)),
+        // 내용 셀 기본 (엣지 변형은 동적 생성)
+        g_ce:   mkS('F3F4F6','000000',false,10),
+        ev_c:   mkS('FF6B6B','FFFFFF',true, 10),
+        fi_c:   mkS('74B9FF','FFFFFF',true, 10),
+        ex_c:   mkS('A29BFE','FFFFFF',true, 10),
+        lu_c:   mkS('FFCCCC','000000',false,10),
+        ho_c:   mkS('FEE2E2','DC2626',true, 12),
+        em_c:   mkS('FFFFFF','000000',false,10),
+      };
+
+      // suffix → 스타일 동적 반환
+      const getS = (key) => {
+        const suffixes = ['_RB','_R','_B'];
+        for (const suf of suffixes) {
+          if (key.endsWith(suf)) {
+            const base = S[key.slice(0, -suf.length)];
+            return base ? edge(base, suf.replace(/_/g,'')) : S[key];
+          }
+        }
+        return S[key];
+      };
+
+      // 셀 기록
+      const setCell = (r, c, v, s) => {
+        ws[XLSX.utils.encode_cell({ r, c })] = { v: v ?? '', t: 's', s };
+      };
+
+      // 행 구성 (원본 buildRow와 동일 로직)
+      const buildRow = (specs, hPx) => {
+        if (hPx) rowHeights[R] = { hpx: hPx };
+        let col = 0;
         const newCov = {};
         specs.forEach(sp => {
           while (cov[col]) col++;
           const ma = sp.ma || 0, md = sp.md || 0;
-          let a = `ss:StyleID="${sp.st}" ss:Index="${col}"`;
-          if (ma) a += ` ss:MergeAcross="${ma}"`;
-          if (md) {
-            a += ` ss:MergeDown="${md}"`;
-            for (let c = col; c <= col + ma; c++) newCov[c] = md;
-          }
-          xml += sp.v != null
-            ? `<Cell ${a}><Data ss:Type="String">${esc(sp.v)}</Data></Cell>`
-            : `<Cell ${a}/>`;
+          const s = sp.s;
+          setCell(R, col, sp.v, s);
+          for (let c = col + 1; c <= col + ma; c++) setCell(R, c, '', s);
+          if (ma > 0 || md > 0) merges.push({ s: { r:R, c:col }, e: { r:R+md, c:col+ma } });
+          if (md > 0) for (let c = col; c <= col + ma; c++) newCov[c] = md;
           col += ma + 1;
         });
-        xml += '</Row>';
-        // 커버리지 갱신: 기존 감소 → 신규 추가
         Object.keys(cov).forEach(k => { cov[k]--; if (cov[k] <= 0) delete cov[k]; });
         Object.entries(newCov).forEach(([k, v]) => { cov[k] = v; });
-        return xml;
+        R++;
       };
 
-      let rows = '';
-      // 타이틀
-      rows += buildRow([{ st:'hdr', v:`📋 ${year}년 ${month}월 ${title}`, ma:5 }], 36);
-      rows += buildRow([{ st:'sub', v:'성인 발달장애인 주간활동센터', ma:5 }], 26);
-      rows += buildRow([{ st:'spc', ma:5 }], 8);
-      // 범례
-      rows += buildRow([
-        {st:'l_ev_b',v:'전체행사',ma:1},{st:'l_fi_b',v:'고정프로그램',ma:1},{st:'l_ex_b',v:'내외부프로그램',ma:1},
-      ], 28);
-      rows += buildRow([{ st:'spc', ma:5 }], 8);
+      // ── 타이틀 ──
+      buildRow([{ v:`📋 ${year}년 ${month}월 ${title}`, ma:5, s:S.hdr }], 36);
+      buildRow([{ v:'성인 발달장애인 주간활동센터', ma:5, s:S.sub }], 26);
+      buildRow([{ v:'', ma:5, s:S.spc }], 8);
 
+      // ── 범례 ──
+      buildRow([
+        { v:'전체행사',      ma:1, s:S.l_ev },
+        { v:'고정프로그램',  ma:1, s:S.l_fi },
+        { v:'내외부프로그램',ma:1, s:S.l_ex },
+      ], 28);
+      buildRow([{ v:'', ma:5, s:S.spc }], 8);
+
+      // ── 주차별 ──
       weeks.forEach((wk, wi) => {
         const wd = getWeekDates(wk);
-        // 주차 제목 — 굵은 바깥 테두리 (상+좌+우 굵게, 하 얇게)
-        rows += buildRow([{ st:'w_hd', v:`📌 ${wi+1}주차`, ma:5 }], 30);
-        // 요일 행: 시간셀 두꺼운 왼쪽, 금요일셀 두꺼운 오른쪽
-        rows += buildRow([
-          { st:'c_hd_L', v:'시간', md:1 },
+
+        buildRow([{ v:`📌 ${wi+1}주차`, ma:5, s:S.w_hd }], 30);
+
+        // 요일 행
+        buildRow([
+          { v:'시간', md:1, s:S.c_hd_L },
           ...['월','화','수','목','금'].map((d, i) => {
-            const isLast = i === 4;
-            const isHol = wd[i]?.isHoliday;
-            return { st: isLast ? (isHol ? 'c_ho_R' : 'c_hd_R') : (isHol ? 'c_ho' : 'c_hd'), v:`${d}요일` };
+            const isLast = i === 4, isHol = wd[i]?.isHoliday;
+            return { v:`${d}요일`, s: isLast ? (isHol?S.c_ho_R:S.c_hd_R) : (isHol?S.c_ho:S.c_hd) };
           }),
         ], 26);
-        // 날짜 행 (1열은 위 병합으로 커버됨), 금요일셀 두꺼운 오른쪽
-        rows += buildRow(wd.map((info, i) => {
-          const isLast = i === 4;
-          const isHol = info?.isHoliday;
-          if (!info) return { st: isLast ? 'c_hd_R' : 'c_hd', v:'' };
-          return { st: isLast ? (isHol ? 'c_ho_R' : 'c_hd_R') : (isHol ? 'c_ho' : 'c_hd'),
-                   v:`${info.day}일${info.holidayName ? ' ('+info.holidayName+')' : ''}` };
+
+        // 날짜 행
+        buildRow(wd.map((info, i) => {
+          const isLast = i === 4, isHol = info?.isHoliday;
+          if (!info) return { v:'', s: isLast?S.c_hd_R:S.c_hd };
+          return { v:`${info.day}일${info.holidayName ? ' ('+info.holidayName+')' : ''}`,
+                   s: isLast ? (isHol?S.c_ho_R:S.c_hd_R) : (isHol?S.c_ho:S.c_hd) };
         }), 26);
-        // 시간대별 행: 첫열 두꺼운 왼쪽, 마지막열 두꺼운 오른쪽, 마지막행 두꺼운 아래쪽
+
+        // 시간대 행
         timeSlots.forEach((slot, slotIdx) => {
           const isLastRow = slotIdx === timeSlots.length - 1;
-          const specs = [{ st: isLastRow ? 't_ce_LB' : 't_ce_L', v:slot }];
+          const specs = [{ v:slot, s: isLastRow?S.t_ce_LB:S.t_ce_L }];
           wd.forEach((info, i) => {
             const isLastCol = i === 4;
-            const suf = isLastRow && isLastCol ? '_RB' : isLastRow ? '_B' : isLastCol ? '_R' : '';
-            if (!info) { specs.push({ st:'g_ce'+suf, v:'' }); return; }
+            const suf = (isLastRow&&isLastCol)?'_RB':isLastRow?'_B':isLastCol?'_R':'';
+            if (!info) { specs.push({ v:'', s:getS('g_ce'+suf) }); return; }
             if (info.isHoliday) {
-              // 공휴일 병합셀: md로 마지막 행까지 확장 → 항상 굵은 아래쪽 필요
-              if (slotIdx === 0) specs.push({ st:'ho_c'+(isLastCol?'_RB':'_B'), v: info.holidayName || '휴일', md: timeSlots.length - 1 });
+              if (slotIdx === 0)
+                specs.push({ v:info.holidayName||'휴일', md:timeSlots.length-1, s:getS('ho_c'+(isLastCol?'_RB':'_B')) });
               return;
             }
-            if (slot === '12:00~13:00') { specs.push({ st:'lu_c'+suf, v:'점심식사 및 위생지원' }); return; }
+            if (slot === '12:00~13:00') { specs.push({ v:'점심식사 및 위생지원', s:getS('lu_c'+suf) }); return; }
             const scheds = getAtTime(info.dateStr, slot);
             if (scheds.length) {
-              const s = scheds[0];
-              const base = s.type==='event' ? 'ev_c' : s.type==='external' ? 'ex_c' : 'fi_c';
-              specs.push({ st:base+suf, v: s.name === '월을 소개합니다' ? `${month}월을 소개합니다` : s.name });
+              const sc = scheds[0];
+              const base = sc.type==='event'?'ev_c':sc.type==='external'?'ex_c':'fi_c';
+              specs.push({ v: sc.name==='월을 소개합니다'?`${month}월을 소개합니다`:sc.name, s:getS(base+suf) });
             } else {
-              specs.push({ st:'em_c'+suf, v:'' });
+              specs.push({ v:'', s:getS('em_c'+suf) });
             }
           });
-          rows += buildRow(specs, 30);
+          buildRow(specs, 30);
         });
-        rows += buildRow([{ st:'spc', ma:5 }], 10);
+
+        buildRow([{ v:'', ma:5, s:S.spc }], 10);
       });
 
-      // Excel XML Spreadsheet 정식 포맷 (경고 없음)
-      const xml = [
-        `<?xml version="1.0" encoding="UTF-8"?>`,
-        `<?mso-application progid="Excel.Sheet"?>`,
-        `<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"`,
-        ` xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"`,
-        ` xmlns:x="urn:schemas-microsoft-com:office:excel"`,
-        ` xmlns:o="urn:schemas-microsoft-com:office:office">`,
-        stylesXml,
-        `<Worksheet ss:Name="${esc(month+'월 계획서')}">`,
-        `<Table>`,
-        `<Column ss:Width="90"/><Column ss:Width="120"/><Column ss:Width="120"/>`,
-        `<Column ss:Width="120"/><Column ss:Width="120"/><Column ss:Width="120"/>`,
-        rows,
-        `</Table></Worksheet></Workbook>`,
-      ].join('');
+      // ── 워크시트 설정 ──
+      ws['!cols'] = [{ wpx:90 },{ wpx:120 },{ wpx:120 },{ wpx:120 },{ wpx:120 },{ wpx:120 }];
+      ws['!rows'] = rowHeights;
+      ws['!merges'] = merges;
+      ws['!ref'] = XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:R-1,c:5} });
 
-      const blob = new Blob(['\uFEFF' + xml], { type: 'application/vnd.ms-excel;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `${year}년_${month}월_주간활동계획서.xls`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      XLSX.utils.book_append_sheet(wb, ws, `${month}월 계획서`);
+      XLSX.writeFile(wb, `${year}년_${month}월_주간활동계획서.xlsx`);
     } catch (e) {
       alert('엑셀 파일 생성에 실패했습니다: ' + e.message);
     }
