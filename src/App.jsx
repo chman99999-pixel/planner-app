@@ -373,7 +373,7 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
       ws['!ref'] = XLSX.utils.encode_range({ s:{r:0,c:0}, e:{r:R-1,c:5} });
 
       XLSX.utils.book_append_sheet(wb, ws, `${month}월 계획서`);
-      XLSX.writeFile(wb, `${year}년_${month}월_주간활동계획서.xlsx`);
+      XLSX.writeFile(wb, `${month}월 주간활동계획서-달력.xlsx`);
     } catch (e) {
       alert('엑셀 파일 생성에 실패했습니다: ' + e.message);
     }
