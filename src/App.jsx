@@ -101,7 +101,8 @@ const EXTERNAL_PROGRAMS = [
   { name: '태권도', type: '외', icon: '🥋' }, { name: '떡공예', type: '외', icon: '🍡' },
   { name: '샌드아트', type: '강', icon: '🏖️' }, { name: '난타A', type: '강', icon: '🪘' },
   { name: '난타B', type: '강', icon: '🪘' }, { name: '도예', type: '협', icon: '🏺' },
-  { name: '플라워아트', type: '강', icon: '💐' }, { name: '아이드림', type: '협', icon: '⭐' }
+  { name: '플라워아트', type: '강', icon: '💐' }, { name: '아이드림', type: '협', icon: '⭐' },
+  { name: '게이트볼', type: '외', icon: '🏑' }
 ];
 
 const MiniCalendar = ({ year, month, selectedDates = [], onDateToggle, onClose }) => {
