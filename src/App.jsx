@@ -98,7 +98,7 @@ const EXTERNAL_PROGRAMS = [
   { name: '재활체육', type: '강', icon: '🏋️' }, { name: '방송댄스', type: '외', icon: '🕺' },
   { name: '와우댄스', type: '강', icon: '💫' }, { name: '와우댄스', type: '외', icon: '✨' },
   { name: '국악한마당', type: '외', icon: '🥁' }, { name: '보치아', type: '외', icon: '🎯' },
-  { name: '태권도', type: '외', icon: '🥋' }, { name: '떡공예', type: '외', icon: '🍡' },
+  { name: '태권도', type: '협', icon: '🥋' }, { name: '떡공예', type: '외', icon: '🍡' },
   { name: '샌드아트', type: '강', icon: '🏖️' }, { name: '난타A', type: '강', icon: '🪘' },
   { name: '난타B', type: '강', icon: '🪘' }, { name: '도예', type: '협', icon: '🏺' },
   { name: '플라워아트', type: '강', icon: '💐' }, { name: '아이드림', type: '협', icon: '⭐' },
