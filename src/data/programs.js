@@ -3947,5 +3947,23 @@ export const PROGRAM_DB = [
     summary: "지금까지 만든 작품·사진·활동 기록 정리 → 파일에 넣기 → '내가 할 수 있는 것' 목록 작성 → 발표",
     effects: "자기이해, 자존감, 직업 준비",
     note: "",
+  },
+  {
+    id: 121,
+    title: "게이트볼(외)",
+    desc: "야외에서 게이트볼을 즐겨요!",
+    category: "🌍 사회참여/외부",
+    cognitiveLevel: [1, 2, 3],
+    wheelchair: "X",
+    physicalCare: "O",
+    season: "연중",
+    months: "1,2,3,4,5,6,7,8,9,10,11,12",
+    holiday: "",
+    duration: 120,
+    indoor: "실외",
+    materials: "게이트볼 장비, 편한 복장",
+    summary: "게이트볼 규칙 설명 → 팀 구성 → 경기 진행 → 마무리 정리",
+    effects: "신체활동, 협동심, 집중력, 사회참여",
+    note: "",
   }
 ];
