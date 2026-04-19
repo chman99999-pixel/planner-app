@@ -46,7 +46,9 @@ export function useHubAuth() {
 
     async function verify(token) {
       try {
-        const resp = await fetch('/api/verifyHubToken', {
+        // planner-app에 HUB_JWT_SECRET 없이 복서방 중앙 검증 엔드포인트 사용
+        // (CORS * 허용, 복서방에서 시크릿 일원 관리)
+        const resp = await fetch('https://www.bokji-ai.co.kr/api/hub?action=verifyToken', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token }),
@@ -57,7 +59,7 @@ export function useHubAuth() {
         if (!resp.ok || !data.valid) {
           sessionStorage.removeItem(STORAGE_KEY);
           setState({
-            status: data.code === 'TokenExpiredError' ? 'expired' : 'unauthenticated',
+            status: data.error?.includes('만료') || data.code === 'TokenExpiredError' ? 'expired' : 'unauthenticated',
             user: null,
             error: data.error || '인증에 실패했습니다.',
             expiresAt: null,
@@ -65,10 +67,18 @@ export function useHubAuth() {
           return;
         }
 
+        // 복서방 verifyToken 응답: { valid, payload }
+        const payload = data.payload || {};
         const session = {
           token,
-          user: data.user,
-          expiresAt: data.exp * 1000,
+          user: {
+            id: payload.sub,
+            name: payload.name,
+            org: payload.org,
+            role: payload.role,
+            plan_end: payload.plan_end,
+          },
+          expiresAt: (payload.exp || 0) * 1000,
         };
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
         setState({
