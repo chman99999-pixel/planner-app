@@ -83,7 +83,7 @@ export function useHubAuth() {
         sessionStorage.setItem(STORAGE_KEY, JSON.stringify(session));
         setState({
           status: 'authenticated',
-          user: data.user,
+          user: session.user,
           error: null,
           expiresAt: session.expiresAt,
         });
