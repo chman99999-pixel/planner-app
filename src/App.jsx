@@ -516,7 +516,10 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
 };
 
 export default function WeeklyPlannerApp() {
-  const curMonth = new Date().getMonth() + 1;
+  const todayKST = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Seoul' }));
+  const curMonth = todayKST.getDate() > 15
+    ? (todayKST.getMonth() + 2 > 12 ? 1 : todayKST.getMonth() + 2)
+    : todayKST.getMonth() + 1;
   const [step, setStep] = useState(1);
   const [userInfo, setUserInfo] = useState({ wheelchair: false, cognitive: '중', cognitiveLevel: '초등 저학년', month: curMonth, dismissalTime: '17:00' });
   const [events, setEvents] = useState([]);
