@@ -612,8 +612,8 @@ export default function WeeklyPlannerApp() {
             </div>
             <div>
               <label className="block text-base font-medium mb-2">등원 시간</label>
-              <div className="grid grid-cols-4 gap-2">
-                {['09:00','10:00','11:00','12:00'].map(t => (
+              <div className="grid grid-cols-3 gap-2">
+                {['09:00','10:00','11:00','12:00','13:00','14:00'].map(t => (
                   <button key={t} onClick={() => setUserInfo({...userInfo, arrivalTime: t})}
                     className={`py-3 rounded-lg border-2 font-medium text-lg ${userInfo.arrivalTime === t ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>{t}</button>
                 ))}
