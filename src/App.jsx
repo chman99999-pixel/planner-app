@@ -62,9 +62,9 @@ const getThirdFriday = (year, month) => {
   for (let day = 1; day <= 31; day++) {
     const date = new Date(year, month - 1, day);
     if (date.getMonth() !== month - 1) break;
-    if (date.getDay() === 5) {
+    if (date.getDay() === 5 && isWeekday(date)) {
       count++;
-      if (count === 3 && isWeekday(date)) return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      if (count === 3) return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
   }
   return null;
