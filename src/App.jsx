@@ -84,7 +84,7 @@ const FIXED_INFO = {
   monthIntro: { name: '월을 소개합니다', icon: '📅' },
   safetyEducation: { name: '소방안전 & 감염병예방교육', icon: '🚒' },
   birthday: { name: '생일축하해요', icon: '🎂' },
-  survey: { name: '이용자 선호도조사', icon: '📋' },
+  survey: { name: '프로그램 선호도조사', icon: '📋' },
   healthEducation: { name: '보건교육', icon: '🏥' },
   communityExplore: { name: '지역사회탐방', icon: '🗺️' },
   cinema: { name: '소룡시네마', icon: '🎬' },
