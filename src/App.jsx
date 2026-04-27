@@ -157,7 +157,7 @@ const TimeSelect = ({ value, onChange, label }) => (
   </select>
 );
 
-const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, externalPrograms = [], externalSchedules = {}, dismissalTime, title, onClose, isFinal }) => {
+const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, externalPrograms = [], externalSchedules = {}, arrivalTime = '09:00', dismissalTime, title, onClose, isFinal }) => {
   const weekdays = getWeekdaysOfMonth(year, month);
   const weeks = [];
   let week = [], lastDay = -1;
@@ -189,9 +189,13 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
     });
   };
 
-  const timeSlots = dismissalTime === '16:00'
-    ? ['09:00~10:00','10:00~11:00','11:00~12:00','12:00~13:00','13:00~14:00','14:00~15:00','15:00~16:00']
-    : ['09:00~10:00','10:00~11:00','11:00~12:00','12:00~13:00','13:00~14:00','14:00~15:00','15:00~16:00','16:00~17:00'];
+  const timeSlots = (() => {
+    const startH = parseInt(arrivalTime.split(':')[0]);
+    const endH = parseInt(dismissalTime.split(':')[0]);
+    const slots = [];
+    for (let h = startH; h < endH; h++) slots.push(`${String(h).padStart(2,'0')}:00~${String(h+1).padStart(2,'0')}:00`);
+    return slots;
+  })();
 
   const getWeekDates = (wk) => {
     if (!wk.length) return [];
@@ -521,16 +525,17 @@ export default function WeeklyPlannerApp() {
     ? (todayKST.getMonth() + 2 > 12 ? 1 : todayKST.getMonth() + 2)
     : todayKST.getMonth() + 1;
   const [step, setStep] = useState(1);
-  const [userInfo, setUserInfo] = useState({ wheelchair: false, cognitive: '중', cognitiveLevel: '초등 저학년', month: curMonth, dismissalTime: '17:00' });
+  const [userInfo, setUserInfo] = useState({ wheelchair: false, cognitive: '중', cognitiveLevel: '초등 저학년', month: curMonth, arrivalTime: '09:00', dismissalTime: '17:00' });
   const [events, setEvents] = useState([]);
   const [showEventCal, setShowEventCal] = useState(false);
 
-  const initFixed = (m, dt) => {
-    const y = 2026, fw = getFirstWeekday(y, m), ff = getFirstFriday(y, m), tf = getThirdFriday(y, m), et = dt === '16:00' ? '16:00' : '17:00';
+  const addHour = (t) => `${String(parseInt(t) + 1).padStart(2, '0')}:00`;
+  const initFixed = (m, at, dt) => {
+    const y = 2026, fw = getFirstWeekday(y, m), ff = getFirstFriday(y, m), tf = getThirdFriday(y, m), nh = addHour(at);
     return {
-      monthIntro: { enabled: true, dates: fw ? [fw] : [], startTime: '09:00', endTime: '10:00', rule: '매월 첫 평일 09:00~10:00' },
-      safetyEducation: { enabled: true, dates: ff ? [ff] : [], startTime: '09:00', endTime: '10:00', rule: '첫째주 금요일 09:00~10:00' },
-      birthday: { enabled: true, dates: tf ? [tf] : [], startTime: '13:00', endTime: et, rule: `셋째주 금요일 13:00~${et}` },
+      monthIntro: { enabled: true, dates: fw ? [fw] : [], startTime: at, endTime: nh, rule: `매월 첫 평일 ${at}~${nh}` },
+      safetyEducation: { enabled: true, dates: ff ? [ff] : [], startTime: at, endTime: nh, rule: `첫째주 금요일 ${at}~${nh}` },
+      birthday: { enabled: true, dates: tf ? [tf] : [], startTime: '13:00', endTime: dt, rule: `셋째주 금요일 13:00~${dt}` },
       survey: { enabled: true, dates: [], startTime: '', endTime: '', rule: '평일 1시간' },
       healthEducation: { enabled: true, dates: [], startTime: '', endTime: '', rule: '평일 1시간' },
       communityExplore: { enabled: true, dates: [], startTime: '', endTime: '', rule: '평일 3시간' },
@@ -540,21 +545,22 @@ export default function WeeklyPlannerApp() {
     };
   };
 
-  const [fixedPrograms, setFixedPrograms] = useState(() => initFixed(curMonth, '17:00'));
+  const [fixedPrograms, setFixedPrograms] = useState(() => initFixed(curMonth, '09:00', '17:00'));
   const [selectedExt, setSelectedExt] = useState([]);
   const [extSchedules, setExtSchedules] = useState({});
   const [showPreview, setShowPreview] = useState(false);
   const [showFinalPlan, setShowFinalPlan] = useState(false);
 
   useEffect(() => {
-    const y = 2026, fw = getFirstWeekday(y, userInfo.month), ff = getFirstFriday(y, userInfo.month), tf = getThirdFriday(y, userInfo.month), et = userInfo.dismissalTime === '16:00' ? '16:00' : '17:00';
+    const y = 2026, fw = getFirstWeekday(y, userInfo.month), ff = getFirstFriday(y, userInfo.month), tf = getThirdFriday(y, userInfo.month);
+    const at = userInfo.arrivalTime, dt = userInfo.dismissalTime, nh = addHour(at);
     setFixedPrograms(p => ({
       ...p,
-      monthIntro: { ...p.monthIntro, dates: fw ? [fw] : [] },
-      safetyEducation: { ...p.safetyEducation, dates: ff ? [ff] : [] },
-      birthday: { ...p.birthday, dates: tf ? [tf] : [], endTime: et, rule: `셋째주 금요일 13:00~${et}` }
+      monthIntro: { ...p.monthIntro, dates: fw ? [fw] : [], startTime: at, endTime: nh, rule: `매월 첫 평일 ${at}~${nh}` },
+      safetyEducation: { ...p.safetyEducation, dates: ff ? [ff] : [], startTime: at, endTime: nh, rule: `첫째주 금요일 ${at}~${nh}` },
+      birthday: { ...p.birthday, dates: tf ? [tf] : [], endTime: dt, rule: `셋째주 금요일 13:00~${dt}` }
     }));
-  }, [userInfo.month, userInfo.dismissalTime]);
+  }, [userInfo.month, userInfo.arrivalTime, userInfo.dismissalTime]);
 
   const toggleFixedDate = (key, date) => setFixedPrograms(p => {
     const cur = p[key].dates || [];
@@ -605,11 +611,20 @@ export default function WeeklyPlannerApp() {
               </select>
             </div>
             <div>
+              <label className="block text-base font-medium mb-2">등원 시간</label>
+              <div className="grid grid-cols-4 gap-2">
+                {['09:00','10:00','11:00','12:00'].map(t => (
+                  <button key={t} onClick={() => setUserInfo({...userInfo, arrivalTime: t})}
+                    className={`py-3 rounded-lg border-2 font-medium text-lg ${userInfo.arrivalTime === t ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>{t}</button>
+                ))}
+              </div>
+            </div>
+            <div>
               <label className="block text-base font-medium mb-2">하원 시간</label>
-              <div className="flex gap-3">
-                {['16:00','17:00'].map(t => (
+              <div className="grid grid-cols-3 gap-2">
+                {['13:00','14:00','15:00','16:00','17:00','18:00'].map(t => (
                   <button key={t} onClick={() => setUserInfo({...userInfo, dismissalTime: t})}
-                    className={`flex-1 py-3 rounded-lg border-2 font-medium text-lg ${userInfo.dismissalTime === t ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>{t}</button>
+                    className={`py-3 rounded-lg border-2 font-medium text-lg ${userInfo.dismissalTime === t ? 'border-indigo-500 bg-indigo-50' : 'border-gray-200'}`}>{t}</button>
                 ))}
               </div>
             </div>
@@ -808,8 +823,8 @@ export default function WeeklyPlannerApp() {
         )}
       </main>
 
-      {showPreview && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} dismissalTime={userInfo.dismissalTime} title="계획서 미리보기" onClose={() => setShowPreview(false)} />}
-      {showFinalPlan && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} dismissalTime={userInfo.dismissalTime} title="주간활동 계획서" onClose={() => setShowFinalPlan(false)} isFinal={true} />}
+      {showPreview && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} arrivalTime={userInfo.arrivalTime} dismissalTime={userInfo.dismissalTime} title="계획서 미리보기" onClose={() => setShowPreview(false)} />}
+      {showFinalPlan && <SchedulePreviewModal year={2026} month={userInfo.month} events={events} fixedPrograms={fixedPrograms} externalPrograms={selectedExt} externalSchedules={extSchedules} arrivalTime={userInfo.arrivalTime} dismissalTime={userInfo.dismissalTime} title="주간활동 계획서" onClose={() => setShowFinalPlan(false)} isFinal={true} />}
     </div>
   );
 }
