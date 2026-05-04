@@ -86,10 +86,10 @@ const FIXED_INFO = {
   birthday: { name: '생일축하해요', icon: '🎂' },
   survey: { name: '프로그램 선호도조사', icon: '📋' },
   healthEducation: { name: '보건교육', icon: '🏥' },
-  communityExplore: { name: '지역사회탐방', icon: '🗺️' },
+  communityExplore: { name: '지역사회탐방(외)', icon: '🗺️' },
   cinema: { name: '소룡시네마', icon: '🎬' },
   cooking: { name: '요리수업', icon: '👨‍🍳' },
-  outdoor: { name: '외부활동', icon: '🌳' }
+  outdoor: { name: '외부활동(외)', icon: '🌳' }
 };
 
 const EXTERNAL_PROGRAMS = [
