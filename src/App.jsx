@@ -363,12 +363,13 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
                 specs.push({ v:info.holidayName||'휴일', md:timeSlots.length-1, s:getS('ho_c'+(isLastCol?'_RB':'_B')) });
               return;
             }
-            if (slot === '12:00~13:00') { specs.push({ v:'점심식사 및 위생지원', s:getS('lu_c'+suf) }); return; }
             const scheds = getAtTime(info.dateStr, slot);
             if (scheds.length) {
               const sc = scheds[0];
               const base = sc.type==='event'?'ev_c':sc.type==='external'?'ex_c':'fi_c';
               specs.push({ v: sc.name==='월을 소개합니다'?`${month}월을 소개합니다`:sc.name, s:getS(base+suf) });
+            } else if (slot === '12:00~13:00') {
+              specs.push({ v:'점심식사 및 위생지원', s:getS('lu_c'+suf) });
             } else {
               specs.push({ v:'', s:getS('em_c'+suf) });
             }
@@ -476,9 +477,11 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
                           }
                           return null;
                         }
-                        if (slot === '12:00~13:00') return <td key={i} className="border border-black text-center text-sm font-medium" style={{backgroundColor:'#ffcccc'}}>점심식사 및 위생지원</td>;
                         const scheds = getAtTime(info.dateStr, slot);
-                        if (!scheds.length) return <td key={i} className="border border-black"></td>;
+                        if (!scheds.length) {
+                          if (slot === '12:00~13:00') return <td key={i} className="border border-black text-center text-sm font-medium" style={{backgroundColor:'#ffcccc'}}>점심식사 및 위생지원</td>;
+                          return <td key={i} className="border border-black"></td>;
+                        }
                         const s = scheds[0];
                         const bg = s.type === 'event' ? '#ff6b6b' : s.type === 'external' ? '#a29bfe' : '#74b9ff';
                         const textColor = '#fff';
