@@ -302,7 +302,11 @@ const SchedulePreviewModal = ({ year, month, events = [], fixedPrograms = {}, ex
           setCell(R, col, sp.v, s);
           for (let c = col + 1; c <= col + ma; c++) setCell(R, c, '', s);
           if (ma > 0 || md > 0) merges.push({ s: { r:R, c:col }, e: { r:R+md, c:col+ma } });
-          if (md > 0) for (let c = col; c <= col + ma; c++) newCov[c] = md;
+          if (md > 0) for (let c = col; c <= col + ma; c++) {
+            newCov[c] = md;
+            // 세로 병합으로 가려지는 아래 칸에도 같은 테두리를 채워, 병합 셀 외곽선(특히 오른쪽 굵은 선)이 끝까지 그려지게 함
+            for (let rr = R + 1; rr <= R + md; rr++) setCell(rr, c, '', s);
+          }
           col += ma + 1;
         });
         Object.keys(cov).forEach(k => { cov[k]--; if (cov[k] <= 0) delete cov[k]; });
