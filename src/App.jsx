@@ -99,7 +99,7 @@ const EXTERNAL_PROGRAMS = [
   { name: '파워댄스', type: '강', icon: '💃' }, { name: 'VR체험', type: '외', icon: '🥽' },
   { name: '농구', type: '외', icon: '🏀' }, { name: '토탈공예', type: '강', icon: '✂️' },
   { name: '재활체육', type: '강', icon: '🏋️' }, { name: '방송댄스', type: '외', icon: '🕺' },
-  { name: '와우댄스', type: '강', icon: '💫' }, { name: '와우댄스', type: '외', icon: '✨' }, { name: '와우댄스', type: '협', icon: '🪩' },
+  { name: '와우댄스', type: '강', icon: '💫' }, { name: '와우댄스', type: '외', icon: '✨' }, { name: '와우댄스', type: '협', icon: '🪩', hideMonths: [7, 8, 9] },
   { name: '국악한마당', type: '외', icon: '🥁' }, { name: '보치아', type: '외', icon: '🎯' },
   { name: '태권도', type: '협', icon: '🥋' }, { name: '떡공예', type: '외', icon: '🍡' },
   { name: '샌드아트', type: '강', icon: '🏖️' }, { name: '난타A', type: '강', icon: '🪘' },
@@ -715,6 +715,8 @@ export default function WeeklyPlannerApp() {
               <p className="text-base text-cyan-600 mb-4">최대 5개 선택 ({selectedExt.length}/5)</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
                 {EXTERNAL_PROGRAMS.map((prog, idx) => {
+                  // 특정 월에 숨김 (예: 와우댄스(협) 7~9월). 인덱스는 유지되어 스케줄 매핑 안전.
+                  if (prog.hideMonths?.includes(Number(userInfo.month))) return null;
                   const sel = selectedExt.includes(idx), dis = !sel && selectedExt.length >= 5;
                   return (
                     <button key={idx} onClick={() => !dis && toggleExt(idx)} disabled={dis}
